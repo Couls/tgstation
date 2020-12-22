@@ -162,8 +162,11 @@ GLOBAL_VAR_INIT(observer_default_invisibility, INVISIBILITY_OBSERVER)
 	addtimer(CALLBACK(src, /atom/proc/update_atom_colour), 10)
 
 /mob/dead/observer/Destroy()
+	if(data_huds_on)
+		remove_data_huds()
+
 	// Update our old body's medhud since we're abandoning it
-	if(mind && mind.current)
+	if(mind?.current)
 		mind.current.med_hud_set_status()
 
 	GLOB.ghost_images_default -= ghostimage_default
@@ -382,7 +385,7 @@ This is the proc mobs get to turn into a ghost. Forked from ghostize due to comp
 	if(message)
 		to_chat(src, "<span class='ghostalert'>[message]</span>")
 		if(source)
-			var/obj/screen/alert/A = throw_alert("[REF(source)]_notify_cloning", /obj/screen/alert/notify_cloning)
+			var/atom/movable/screen/alert/A = throw_alert("[REF(source)]_notify_cloning", /atom/movable/screen/alert/notify_cloning)
 			if(A)
 				if(client && client.prefs && client.prefs.UI_style)
 					A.icon = ui_style2icon(client.prefs.UI_style)
@@ -469,8 +472,8 @@ This is the proc mobs get to turn into a ghost. Forked from ghostize due to comp
 /mob/dead/observer/stop_orbit(datum/component/orbiter/orbits)
 	. = ..()
 	//restart our floating animation after orbit is done.
-	pixel_y = 0
-	animate(src, pixel_y = 2, time = 10, loop = -1)
+	pixel_y = base_pixel_y
+	animate(src, pixel_y = base_pixel_y + 2, time = 1 SECONDS, loop = -1)
 
 /mob/dead/observer/verb/jumptomob() //Moves the ghost instead of just changing the ghosts's eye -Nodrak
 	set category = "Ghost"
@@ -483,7 +486,7 @@ This is the proc mobs get to turn into a ghost. Forked from ghostize due to comp
 		var/list/dest = list() //List of possible destinations (mobs)
 		var/target = null	   //Chosen target.
 
-		dest += getpois(mobs_only=1) //Fill list, prompt user with list
+		dest += getpois(mobs_only = TRUE) //Fill list, prompt user with list
 		target = input("Please, select a player!", "Jump to Mob", null, null) as null|anything in dest
 
 		if (!target)//Make sure we actually have a target
@@ -630,7 +633,7 @@ This is the proc mobs get to turn into a ghost. Forked from ghostize due to comp
 		to_chat(src, "<span class='warning'>This creature is too powerful for you to possess!</span>")
 		return FALSE
 
-	if(can_reenter_corpse && mind && mind.current)
+	if(can_reenter_corpse && mind?.current)
 		if(alert(src, "Your soul is still tied to your former life as [mind.current.name], if you go forward there is no going back to that life. Are you sure you wish to continue?", "Move On", "Yes", "No") == "No")
 			return FALSE
 	if(target.key)
@@ -768,7 +771,7 @@ This is the proc mobs get to turn into a ghost. Forked from ghostize due to comp
 	set category = "Ghost"
 
 	set_ghost_appearance()
-	if(client && client.prefs)
+	if(client?.prefs)
 		deadchat_name = client.prefs.real_name
 		if(mind)
 			mind.ghostname = client.prefs.real_name
@@ -792,7 +795,7 @@ This is the proc mobs get to turn into a ghost. Forked from ghostize due to comp
 
 	update_icon()
 
-/mob/dead/observer/canUseTopic(atom/movable/M, be_close=FALSE, no_dexterity=FALSE, no_tk=FALSE)
+/mob/dead/observer/canUseTopic(atom/movable/M, be_close=FALSE, no_dexterity=FALSE, no_tk=FALSE, need_hands = FALSE, floor_okay=FALSE)
 	return isAdminGhostAI(usr)
 
 /mob/dead/observer/is_literate()
@@ -843,7 +846,9 @@ This is the proc mobs get to turn into a ghost. Forked from ghostize due to comp
 	if (!eye_name)
 		return
 
-	var/mob/mob_eye = creatures[eye_name]
+	do_observe(creatures[eye_name])
+
+/mob/dead/observer/proc/do_observe(mob/mob_eye)
 	//Istype so we filter out points of interest that are not mobs
 	if(client && mob_eye && istype(mob_eye))
 		client.eye = mob_eye

@@ -25,10 +25,11 @@
 					/obj/item/instrument/musicalmoth=1)
 	premium = list(/obj/item/melee/skateboard/pro = 3,
 					/obj/item/clothing/shoes/wheelys/rollerskates= 3,
-					/obj/item/melee/skateboard/hoverboard = 1)
+					/obj/item/melee/skateboard/hoverboard = 1,
+					/obj/item/storage/box/tail_pin = 1)
 	refill_canister = /obj/item/vending_refill/games
-	default_price = 50
-	extra_price = 250
+	default_price = PAYCHECK_ASSISTANT
+	extra_price = PAYCHECK_HARD * 1.25
 	payment_department = ACCOUNT_SRV
 	light_mask = "games-light-mask"
 

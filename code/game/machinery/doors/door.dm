@@ -100,13 +100,13 @@
 	return FALSE
 
 /**
-  * Called when attempting to remove the seal from an airlock
-  *
-  * Here because we need to call it and return if there was a seal so we don't try to open the door
-  * or try its safety lock while it's sealed
-  * Arguments:
-  * * user - the mob attempting to remove the seal
-  */
+ * Called when attempting to remove the seal from an airlock
+ *
+ * Here because we need to call it and return if there was a seal so we don't try to open the door
+ * or try its safety lock while it's sealed
+ * Arguments:
+ * * user - the mob attempting to remove the seal
+ */
 /obj/machinery/door/proc/try_remove_seal(mob/user)
 	return
 
@@ -120,7 +120,10 @@
 			return
 		if(isliving(AM))
 			var/mob/living/M = AM
-			if(M.restrained() && !check_access(null))
+			if(world.time - M.last_bumped <= 10)
+				return	//Can bump-open one airlock per second. This is to prevent shock spam.
+			M.last_bumped = world.time
+			if(HAS_TRAIT(M, TRAIT_HANDS_BLOCKED) && !check_access(null))
 				return
 			if(try_safety_unlock(M))
 				return
@@ -147,7 +150,7 @@
 	. = ..()
 	if(.)
 		return
-
+	// Snowflake handling for PASSGLASS.
 	if(istype(mover) && (mover.pass_flags & PASSGLASS))
 		return !opacity
 
@@ -175,10 +178,12 @@
 		return
 	return try_to_activate_door(user)
 
+
 /obj/machinery/door/attack_tk(mob/user)
 	if(requiresID() && !allowed(null))
 		return
-	..()
+	return ..()
+
 
 /obj/machinery/door/proc/try_to_activate_door(mob/user)
 	add_fingerprint(user)

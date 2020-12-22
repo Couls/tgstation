@@ -263,10 +263,7 @@
 	icon_state = "plant-05";
 	pixel_y = 10
 	},
-/turf/open/floor/holofloor{
-	dir = 9;
-	icon_state = "wood"
-	},
+/turf/open/floor/holofloor/carpet,
 /area/holodeck/rec_center/lounge)
 "aW" = (
 /obj/effect/turf_decal/tile/green{
@@ -1162,6 +1159,9 @@
 "dm" = (
 /turf/open/floor/holofloor/plating,
 /area/holodeck/rec_center/refuel)
+"dn" = (
+/turf/open/floor/holofloor/carpet,
+/area/holodeck/rec_center/spacechess)
 "do" = (
 /obj/effect/turf_decal/tile/green,
 /obj/effect/turf_decal/tile/green{
@@ -1408,7 +1408,7 @@
 /area/holodeck/rec_center/school)
 "dZ" = (
 /obj/structure/table/wood,
-/obj/item/reagent_containers/food/snacks/grown/apple,
+/obj/item/food/grown/apple,
 /turf/open/floor/holofloor,
 /area/holodeck/rec_center/school)
 "ea" = (
@@ -1421,8 +1421,7 @@
 	},
 /area/holodeck/rec_center/firingrange)
 "eb" = (
-/obj/structure/target_stake,
-/obj/machinery/magnetic_module,
+/obj/structure/training_machine,
 /turf/open/floor/holofloor{
 	icon_state = "white"
 	},
@@ -1777,15 +1776,8 @@
 	},
 /turf/open/floor/holofloor,
 /area/holodeck/rec_center/firingrange)
-"fh" = (
-/obj/item/paper/guides/jobs/security/range,
-/turf/open/floor/holofloor,
-/area/holodeck/rec_center/firingrange)
 "fi" = (
 /obj/structure/table/reinforced,
-/obj/machinery/magnetic_controller{
-	autolink = 1
-	},
 /obj/structure/window/reinforced{
 	dir = 4
 	},
@@ -1796,6 +1788,10 @@
 	dir = 4
 	},
 /obj/effect/turf_decal/tile/red,
+/obj/item/training_toolbox{
+	pixel_y = 4
+	},
+/obj/item/training_toolbox,
 /turf/open/floor/holofloor,
 /area/holodeck/rec_center/firingrange)
 "fj" = (
@@ -2010,7 +2006,7 @@
 /turf/open/floor/plasteel,
 /area/tdome/arena_source)
 "fR" = (
-/obj/item/reagent_containers/food/snacks/egg/rainbow{
+/obj/item/food/egg/rainbow{
 	desc = "I bet you think you're pretty clever... well you are.";
 	name = "easter egg"
 	},
@@ -7416,8 +7412,8 @@
 /obj/effect/turf_decal/tile/bar{
 	dir = 1
 	},
-/mob/living/simple_animal/hostile/carp/cayenne,
 /obj/structure/bed/dogbed/cayenne,
+/mob/living/simple_animal/hostile/carp/cayenne,
 /turf/open/floor/plasteel,
 /area/syndicate_mothership/control)
 "rh" = (
@@ -8452,7 +8448,7 @@
 /obj/effect/turf_decal/tile/bar{
 	dir = 1
 	},
-/obj/item/reagent_containers/food/snacks/syndicake{
+/obj/item/food/syndicake{
 	pixel_y = 3
 	},
 /turf/open/floor/plasteel,
@@ -10886,7 +10882,7 @@
 /turf/open/floor/engine/cult,
 /area/wizard_station)
 "yH" = (
-/obj/item/reagent_containers/food/snacks/meat/slab/human/mutant/lizard,
+/obj/item/food/meat/slab/human/mutant/lizard,
 /turf/open/floor/grass,
 /area/wizard_station)
 "yI" = (
@@ -11185,7 +11181,7 @@
 /turf/open/floor/grass,
 /area/wizard_station)
 "zr" = (
-/obj/item/reagent_containers/food/snacks/meat/slab/corgi,
+/obj/item/food/meat/slab/corgi,
 /turf/open/floor/grass,
 /area/wizard_station)
 "zs" = (
@@ -11415,11 +11411,11 @@
 /area/holodeck/rec_center/basketball)
 "zV" = (
 /obj/structure/closet/secure_closet/freezer/meat/open,
-/obj/item/reagent_containers/food/snacks/carpmeat,
-/obj/item/reagent_containers/food/snacks/carpmeat,
-/obj/item/reagent_containers/food/snacks/carpmeat,
-/obj/item/reagent_containers/food/snacks/carpmeat,
-/obj/item/reagent_containers/food/snacks/carpmeat,
+/obj/item/food/carpmeat,
+/obj/item/food/carpmeat,
+/obj/item/food/carpmeat,
+/obj/item/food/carpmeat,
+/obj/item/food/carpmeat,
 /turf/open/floor/plasteel/cafeteria,
 /area/centcom/holding)
 "zW" = (
@@ -11696,7 +11692,7 @@
 /turf/open/floor/grass,
 /area/wizard_station)
 "AA" = (
-/obj/item/reagent_containers/food/snacks/meat/slab/human/mutant/slime,
+/obj/item/food/meat/slab/human/mutant/slime,
 /turf/open/floor/grass,
 /area/wizard_station)
 "AB" = (
@@ -11914,7 +11910,7 @@
 /turf/open/floor/engine/cult,
 /area/wizard_station)
 "Bi" = (
-/obj/item/reagent_containers/food/snacks/meat/slab/xeno,
+/obj/item/food/meat/slab/xeno,
 /turf/open/floor/grass,
 /area/wizard_station)
 "Bl" = (
@@ -13942,7 +13938,7 @@
 /area/centcom/holding)
 "Fe" = (
 /obj/structure/table/wood,
-/obj/item/reagent_containers/food/snacks/sashimi,
+/obj/item/food/sashimi,
 /turf/open/floor/wood,
 /area/centcom/holding)
 "Ff" = (
@@ -14522,27 +14518,27 @@
 /area/tdome/tdomeobserve)
 "GF" = (
 /obj/structure/closet/secure_closet/freezer/meat/open,
-/obj/item/reagent_containers/food/snacks/meat/rawbacon,
-/obj/item/reagent_containers/food/snacks/meat/rawbacon,
-/obj/item/reagent_containers/food/snacks/meat/rawbacon,
-/obj/item/reagent_containers/food/snacks/meat/rawbacon,
-/obj/item/reagent_containers/food/snacks/meat/slab/killertomato,
-/obj/item/reagent_containers/food/snacks/meat/slab/killertomato,
-/obj/item/reagent_containers/food/snacks/meat/slab/killertomato,
-/obj/item/reagent_containers/food/snacks/meat/slab/killertomato,
-/obj/item/reagent_containers/food/snacks/meat/slab/human/mutant/lizard,
-/obj/item/reagent_containers/food/snacks/meat/slab/human/mutant/lizard,
-/obj/item/reagent_containers/food/snacks/meat/slab/human/mutant/lizard,
-/obj/item/reagent_containers/food/snacks/meat/slab/human/mutant/lizard,
-/obj/item/reagent_containers/food/snacks/sausage,
-/obj/item/reagent_containers/food/snacks/sausage,
-/obj/item/reagent_containers/food/snacks/meat/rawcutlet,
-/obj/item/reagent_containers/food/snacks/meat/rawcutlet,
-/obj/item/reagent_containers/food/snacks/meat/rawcutlet,
-/obj/item/reagent_containers/food/snacks/carpmeat,
-/obj/item/reagent_containers/food/snacks/carpmeat,
-/obj/item/reagent_containers/food/snacks/carpmeat,
-/obj/item/reagent_containers/food/snacks/carpmeat,
+/obj/item/food/meat/rawbacon,
+/obj/item/food/meat/rawbacon,
+/obj/item/food/meat/rawbacon,
+/obj/item/food/meat/rawbacon,
+/obj/item/food/meat/slab/killertomato,
+/obj/item/food/meat/slab/killertomato,
+/obj/item/food/meat/slab/killertomato,
+/obj/item/food/meat/slab/killertomato,
+/obj/item/food/meat/slab/human/mutant/lizard,
+/obj/item/food/meat/slab/human/mutant/lizard,
+/obj/item/food/meat/slab/human/mutant/lizard,
+/obj/item/food/meat/slab/human/mutant/lizard,
+/obj/item/food/sausage,
+/obj/item/food/sausage,
+/obj/item/food/meat/rawcutlet,
+/obj/item/food/meat/rawcutlet,
+/obj/item/food/meat/rawcutlet,
+/obj/item/food/carpmeat,
+/obj/item/food/carpmeat,
+/obj/item/food/carpmeat,
+/obj/item/food/carpmeat,
 /obj/effect/turf_decal/tile/neutral{
 	dir = 1
 	},
@@ -14557,22 +14553,22 @@
 /area/tdome/tdomeobserve)
 "GG" = (
 /obj/structure/closet/secure_closet/freezer/fridge/open,
-/obj/item/reagent_containers/food/snacks/grown/potato,
-/obj/item/reagent_containers/food/snacks/grown/potato,
-/obj/item/reagent_containers/food/snacks/grown/whitebeet,
-/obj/item/reagent_containers/food/snacks/grown/whitebeet,
-/obj/item/reagent_containers/food/snacks/grown/tomato,
-/obj/item/reagent_containers/food/snacks/grown/tomato,
-/obj/item/reagent_containers/food/snacks/grown/rice,
-/obj/item/reagent_containers/food/snacks/grown/rice,
-/obj/item/reagent_containers/food/snacks/grown/icepepper,
-/obj/item/reagent_containers/food/snacks/grown/icepepper,
-/obj/item/reagent_containers/food/snacks/grown/citrus/lemon,
-/obj/item/reagent_containers/food/snacks/grown/citrus/lime,
-/obj/item/reagent_containers/food/snacks/grown/citrus/orange,
-/obj/item/reagent_containers/food/snacks/grown/cherries,
-/obj/item/reagent_containers/food/snacks/grown/apple,
-/obj/item/reagent_containers/food/snacks/grown/ambrosia/deus,
+/obj/item/food/grown/potato,
+/obj/item/food/grown/potato,
+/obj/item/food/grown/whitebeet,
+/obj/item/food/grown/whitebeet,
+/obj/item/food/grown/tomato,
+/obj/item/food/grown/tomato,
+/obj/item/food/grown/rice,
+/obj/item/food/grown/rice,
+/obj/item/food/grown/icepepper,
+/obj/item/food/grown/icepepper,
+/obj/item/food/grown/citrus/lemon,
+/obj/item/food/grown/citrus/lime,
+/obj/item/food/grown/citrus/orange,
+/obj/item/food/grown/cherries,
+/obj/item/food/grown/apple,
+/obj/item/food/grown/ambrosia/deus,
 /obj/effect/turf_decal/tile/neutral{
 	dir = 1
 	},
@@ -14592,25 +14588,25 @@
 /area/tdome/tdomeobserve)
 "GI" = (
 /obj/structure/closet/secure_closet/freezer/kitchen,
-/obj/item/reagent_containers/food/snacks/grown/banana,
-/obj/item/reagent_containers/food/snacks/grown/banana,
-/obj/item/reagent_containers/food/snacks/grown/wheat,
-/obj/item/reagent_containers/food/snacks/grown/wheat,
-/obj/item/reagent_containers/food/snacks/grown/vanillapod,
-/obj/item/reagent_containers/food/snacks/grown/vanillapod,
-/obj/item/reagent_containers/food/snacks/grown/sugarcane,
-/obj/item/reagent_containers/food/snacks/grown/sugarcane,
-/obj/item/reagent_containers/food/snacks/grown/oat,
-/obj/item/reagent_containers/food/snacks/grown/oat,
-/obj/item/reagent_containers/food/snacks/grown/grapes,
-/obj/item/reagent_containers/food/snacks/grown/grapes,
-/obj/item/reagent_containers/food/snacks/grown/corn,
-/obj/item/reagent_containers/food/snacks/grown/corn,
-/obj/item/reagent_containers/food/snacks/grown/chili,
-/obj/item/reagent_containers/food/snacks/grown/chili,
-/obj/item/reagent_containers/food/snacks/grown/carrot,
-/obj/item/reagent_containers/food/snacks/grown/apple,
-/obj/item/reagent_containers/food/snacks/grown/ambrosia/vulgaris,
+/obj/item/food/grown/banana,
+/obj/item/food/grown/banana,
+/obj/item/food/grown/wheat,
+/obj/item/food/grown/wheat,
+/obj/item/food/grown/vanillapod,
+/obj/item/food/grown/vanillapod,
+/obj/item/food/grown/sugarcane,
+/obj/item/food/grown/sugarcane,
+/obj/item/food/grown/oat,
+/obj/item/food/grown/oat,
+/obj/item/food/grown/grapes,
+/obj/item/food/grown/grapes,
+/obj/item/food/grown/corn,
+/obj/item/food/grown/corn,
+/obj/item/food/grown/chili,
+/obj/item/food/grown/chili,
+/obj/item/food/grown/carrot,
+/obj/item/food/grown/apple,
+/obj/item/food/grown/ambrosia/vulgaris,
 /obj/effect/turf_decal/tile/neutral{
 	dir = 1
 	},
@@ -14625,23 +14621,23 @@
 /area/tdome/tdomeobserve)
 "GJ" = (
 /obj/structure/closet/secure_closet/freezer/meat/open,
-/obj/item/reagent_containers/food/snacks/meat/slab/bear,
-/obj/item/reagent_containers/food/snacks/meat/slab/bear,
-/obj/item/reagent_containers/food/snacks/meat/slab/bear,
-/obj/item/reagent_containers/food/snacks/meat/slab/bear,
-/obj/item/reagent_containers/food/snacks/meat/slab/goliath,
-/obj/item/reagent_containers/food/snacks/meat/slab/goliath,
-/obj/item/reagent_containers/food/snacks/meat/slab/goliath,
-/obj/item/reagent_containers/food/snacks/meat/slab/goliath,
-/obj/item/reagent_containers/food/snacks/meat/slab/xeno,
-/obj/item/reagent_containers/food/snacks/meat/slab/xeno,
-/obj/item/reagent_containers/food/snacks/meat/slab/xeno,
-/obj/item/reagent_containers/food/snacks/meat/slab/xeno,
+/obj/item/food/meat/slab/bear,
+/obj/item/food/meat/slab/bear,
+/obj/item/food/meat/slab/bear,
+/obj/item/food/meat/slab/bear,
+/obj/item/food/meat/slab/goliath,
+/obj/item/food/meat/slab/goliath,
+/obj/item/food/meat/slab/goliath,
+/obj/item/food/meat/slab/goliath,
+/obj/item/food/meat/slab/xeno,
+/obj/item/food/meat/slab/xeno,
+/obj/item/food/meat/slab/xeno,
+/obj/item/food/meat/slab/xeno,
 /obj/item/food/spaghetti,
 /obj/item/food/spaghetti,
-/obj/item/reagent_containers/food/snacks/meat/rawcutlet,
-/obj/item/reagent_containers/food/snacks/meat/rawcutlet,
-/obj/item/reagent_containers/food/snacks/meat/rawcutlet,
+/obj/item/food/meat/rawcutlet,
+/obj/item/food/meat/rawcutlet,
+/obj/item/food/meat/rawcutlet,
 /obj/effect/turf_decal/tile/neutral{
 	dir = 1
 	},
@@ -15068,7 +15064,7 @@
 /area/tdome/tdomeobserve)
 "HB" = (
 /obj/structure/table/reinforced,
-/obj/item/reagent_containers/food/snacks/mint,
+/obj/item/food/mint,
 /obj/item/reagent_containers/food/condiment/enzyme{
 	pixel_y = 5
 	},
@@ -15139,7 +15135,7 @@
 /turf/open/floor/plasteel/white,
 /area/tdome/tdomeobserve)
 "HG" = (
-/obj/item/reagent_containers/food/snacks/egg/rainbow{
+/obj/item/food/egg/rainbow{
 	desc = "I bet you think you're pretty clever... well you are.";
 	name = "easter egg"
 	},
@@ -16714,7 +16710,7 @@
 /obj/docking_port/stationary{
 	dwidth = 1;
 	height = 4;
-	id = "pod4_away";
+	id = "pod_4_away";
 	name = "recovery ship";
 	width = 3
 	},
@@ -16724,7 +16720,7 @@
 /obj/docking_port/stationary{
 	dwidth = 1;
 	height = 4;
-	id = "pod3_away";
+	id = "pod_3_away";
 	name = "recovery ship";
 	width = 3
 	},
@@ -16908,7 +16904,7 @@
 	dir = 4;
 	dwidth = 1;
 	height = 4;
-	id = "pod2_away";
+	id = "pod_2_away";
 	name = "recovery ship";
 	width = 3
 	},
@@ -17526,10 +17522,7 @@
 "NV" = (
 /obj/structure/table/wood,
 /obj/item/instrument/saxophone,
-/turf/open/floor/holofloor{
-	dir = 9;
-	icon_state = "wood"
-	},
+/turf/open/floor/holofloor/carpet,
 /area/holodeck/rec_center/lounge)
 "NZ" = (
 /turf/open/floor/holofloor/dark,
@@ -17644,19 +17637,19 @@
 	dir = 8
 	},
 /obj/structure/table/wood,
-/obj/item/reagent_containers/food/snacks/grown/poppy{
+/obj/item/food/grown/poppy{
 	pixel_y = 2
 	},
-/obj/item/reagent_containers/food/snacks/grown/poppy{
+/obj/item/food/grown/poppy{
 	pixel_y = 2
 	},
-/obj/item/reagent_containers/food/snacks/grown/poppy{
+/obj/item/food/grown/poppy{
 	pixel_y = 2
 	},
-/obj/item/reagent_containers/food/snacks/grown/poppy{
+/obj/item/food/grown/poppy{
 	pixel_y = 2
 	},
-/obj/item/reagent_containers/food/snacks/grown/poppy{
+/obj/item/food/grown/poppy{
 	pixel_y = 2
 	},
 /turf/open/floor/holofloor/dark,
@@ -19326,7 +19319,7 @@
 /area/ctf)
 "Yf" = (
 /obj/structure/table/wood,
-/obj/item/reagent_containers/food/snacks/chawanmushi,
+/obj/item/food/chawanmushi,
 /turf/open/floor/wood,
 /area/centcom/holding)
 "Yh" = (
@@ -19560,11 +19553,11 @@
 	dir = 8
 	},
 /obj/structure/table/wood,
-/obj/item/reagent_containers/food/snacks/grown/harebell,
-/obj/item/reagent_containers/food/snacks/grown/harebell,
-/obj/item/reagent_containers/food/snacks/grown/harebell,
-/obj/item/reagent_containers/food/snacks/grown/harebell,
-/obj/item/reagent_containers/food/snacks/grown/harebell,
+/obj/item/food/grown/harebell,
+/obj/item/food/grown/harebell,
+/obj/item/food/grown/harebell,
+/obj/item/food/grown/harebell,
+/obj/item/food/grown/harebell,
 /turf/open/floor/holofloor/dark,
 /area/holodeck/rec_center/chapelcourt)
 "Zh" = (
@@ -19672,9 +19665,6 @@
 	},
 /turf/open/floor/plasteel,
 /area/centcom/evac)
-"ZK" = (
-/turf/open/floor/holofloor/carpet,
-/area/holodeck/rec_center/spacechess)
 "ZN" = (
 /obj/structure/table/wood,
 /obj/item/toy/crayon/spraycan{
@@ -70902,7 +70892,7 @@ eF
 eF
 eF
 eF
-fh
+eF
 cW
 fw
 bj
@@ -82706,16 +82696,16 @@ aa
 "}
 (246,1,1) = {"
 fx
-ZK
-ZK
-ZK
-ZK
-ZK
-ZK
-ZK
-ZK
-ZK
-ZK
+dn
+dn
+dn
+dn
+dn
+dn
+dn
+dn
+dn
+dn
 bj
 dm
 dm
@@ -82963,7 +82953,7 @@ aa
 "}
 (247,1,1) = {"
 fx
-ZK
+dn
 Hk
 ee
 ew
@@ -82972,7 +82962,7 @@ ew
 ev
 eX
 Ul
-ZK
+dn
 bj
 dm
 dm
@@ -83220,7 +83210,7 @@ aa
 "}
 (248,1,1) = {"
 fx
-ZK
+dn
 Ou
 ed
 ev
@@ -83229,7 +83219,7 @@ ev
 ew
 eW
 Yi
-ZK
+dn
 bj
 dm
 dm
@@ -83477,7 +83467,7 @@ aa
 "}
 (249,1,1) = {"
 fx
-ZK
+dn
 Dk
 ee
 ew
@@ -83486,7 +83476,7 @@ ew
 ev
 eX
 RR
-ZK
+dn
 bj
 dm
 dG
@@ -83734,7 +83724,7 @@ aa
 "}
 (250,1,1) = {"
 fx
-ZK
+dn
 VK
 ed
 ev
@@ -83743,7 +83733,7 @@ ev
 ew
 eW
 TP
-ZK
+dn
 bj
 dm
 dG
@@ -83991,7 +83981,7 @@ aa
 "}
 (251,1,1) = {"
 fx
-ZK
+dn
 TM
 ee
 ew
@@ -84000,7 +83990,7 @@ ew
 ev
 eX
 Wu
-ZK
+dn
 bj
 dm
 dG
@@ -84248,7 +84238,7 @@ aa
 "}
 (252,1,1) = {"
 fx
-ZK
+dn
 Oo
 ed
 ev
@@ -84257,7 +84247,7 @@ ev
 ew
 eW
 vp
-ZK
+dn
 bj
 dm
 dm
@@ -84505,7 +84495,7 @@ aa
 "}
 (253,1,1) = {"
 fx
-ZK
+dn
 dK
 ee
 ew
@@ -84514,7 +84504,7 @@ ew
 ev
 eX
 fm
-ZK
+dn
 bj
 dm
 dm
@@ -84762,7 +84752,7 @@ aa
 "}
 (254,1,1) = {"
 fx
-ZK
+dn
 dH
 ed
 ev
@@ -84771,7 +84761,7 @@ ev
 ew
 eW
 fj
-ZK
+dn
 bj
 dm
 dm

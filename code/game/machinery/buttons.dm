@@ -111,7 +111,7 @@
 		return
 	req_access = list()
 	req_one_access = list()
-	playsound(src, "sparks", 100, TRUE)
+	playsound(src, "sparks", 100, TRUE, SHORT_RANGE_SOUND_EXTRARANGE)
 	obj_flags |= EMAGGED
 
 /obj/machinery/button/attack_ai(mob/user)
@@ -127,10 +127,10 @@
 		A.id = id
 	initialized_button = 1
 
-/obj/machinery/button/connect_to_shuttle(obj/docking_port/mobile/port, obj/docking_port/stationary/dock, idnum, override=FALSE)
-	if(id && istype(device, /obj/item/assembly/control))
-		var/obj/item/assembly/control/A = device
-		A.id = "[idnum][id]"
+/obj/machinery/button/connect_to_shuttle(obj/docking_port/mobile/port, obj/docking_port/stationary/dock)
+	if(id)
+		id = "[port.id]_[id]"
+		setup_device()
 
 /obj/machinery/button/attack_hand(mob/user)
 	. = ..()
@@ -216,6 +216,16 @@
 	name = "combustion chamber vent control"
 	id = INCINERATOR_ATMOS_AUXVENT
 	req_one_access = list(ACCESS_ATMOSPHERICS, ACCESS_MAINT_TUNNELS)
+
+/obj/machinery/button/door/atmos_test_room_mainvent_1
+	name = "test chamber 1 vent control"
+	id = TEST_ROOM_ATMOS_MAINVENT_1
+	req_one_access = list(ACCESS_ATMOSPHERICS)
+
+/obj/machinery/button/door/atmos_test_room_mainvent_2
+	name = "test chamber 2 vent control"
+	id = TEST_ROOM_ATMOS_MAINVENT_2
+	req_one_access = list(ACCESS_ATMOSPHERICS)
 
 /obj/machinery/button/door/incinerator_vent_syndicatelava_main
 	name = "turbine vent control"

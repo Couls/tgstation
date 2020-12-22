@@ -90,6 +90,46 @@ SAVEFILE UPDATING/VERSIONING - 'Simplified', or rather, more coder-friendly ~Car
 /datum/preferences/proc/update_character(current_version, savefile/S)
 	return
 
+/// checks through keybindings for outdated unbound keys and updates them
+/datum/preferences/proc/check_keybindings()
+	if(!parent)
+		return
+	var/list/user_binds = list()
+	for (var/key in key_bindings)
+		for(var/kb_name in key_bindings[key])
+			user_binds[kb_name] += list(key)
+	var/list/notadded = list()
+	for (var/name in GLOB.keybindings_by_name)
+		var/datum/keybinding/kb = GLOB.keybindings_by_name[name]
+		if(length(user_binds[kb.name]))
+			continue // key is unbound and or bound to something
+		var/addedbind = FALSE
+		if(hotkeys)
+			for(var/hotkeytobind in kb.classic_keys)
+				if(!length(key_bindings[hotkeytobind]))
+					LAZYADD(key_bindings[hotkeytobind], kb.name)
+					addedbind = TRUE
+		else
+			for(var/classickeytobind in kb.classic_keys)
+				if(!length(key_bindings[classickeytobind]))
+					LAZYADD(key_bindings[classickeytobind], kb.name)
+					addedbind = TRUE
+		if(!addedbind)
+			notadded += kb
+	if(length(notadded))
+		addtimer(CALLBACK(src, .proc/announce_conflict, notadded), 5 SECONDS)
+
+/datum/preferences/proc/announce_conflict(list/notadded)
+	to_chat(parent, "<span class='userdanger'>KEYBINDING CONFLICT!!!\n\
+	There are new keybindings that have defaults bound to keys you already set, They will default to Unbound. You can bind them in Setup Character or Game Preferences\n\
+	<a href='?_src_=prefs;preference=tab;tab=3'>Or you can click here to go straight to the keybindings page</a></span>")
+	for(var/item in notadded)
+		var/datum/keybinding/conflicted = item
+		to_chat(parent, "<span class='userdanger'>[conflicted.category]: [conflicted.full_name] needs updating")
+		LAZYADD(key_bindings["Unbound"], conflicted.name) // set it to unbound to prevent this from opening up again in the future
+
+
+
 /datum/preferences/proc/load_path(ckey,filename="preferences.sav")
 	if(!ckey)
 		return
@@ -124,6 +164,8 @@ SAVEFILE UPDATING/VERSIONING - 'Simplified', or rather, more coder-friendly ~Car
 	READ_FILE(S["max_chat_length"], max_chat_length)
 	READ_FILE(S["see_chat_non_mob"] , see_chat_non_mob)
 	READ_FILE(S["see_rc_emotes"] , see_rc_emotes)
+	READ_FILE(S["broadcast_login_logout"] , broadcast_login_logout)
+
 	READ_FILE(S["tgui_fancy"], tgui_fancy)
 	READ_FILE(S["tgui_lock"], tgui_lock)
 	READ_FILE(S["buttons_locked"], buttons_locked)
@@ -158,6 +200,7 @@ SAVEFILE UPDATING/VERSIONING - 'Simplified', or rather, more coder-friendly ~Car
 
 	// Custom hotkeys
 	READ_FILE(S["key_bindings"], key_bindings)
+	check_keybindings()
 	// hearted
 	READ_FILE(S["hearted_until"], hearted_until)
 	if(hearted_until > world.realtime)
@@ -183,6 +226,7 @@ SAVEFILE UPDATING/VERSIONING - 'Simplified', or rather, more coder-friendly ~Car
 	max_chat_length = sanitize_integer(max_chat_length, 1, CHAT_MESSAGE_MAX_LENGTH, initial(max_chat_length))
 	see_chat_non_mob	= sanitize_integer(see_chat_non_mob, FALSE, TRUE, initial(see_chat_non_mob))
 	see_rc_emotes	= sanitize_integer(see_rc_emotes, FALSE, TRUE, initial(see_rc_emotes))
+	broadcast_login_logout = sanitize_integer(broadcast_login_logout, FALSE, TRUE, initial(broadcast_login_logout))
 	tgui_fancy		= sanitize_integer(tgui_fancy, FALSE, TRUE, initial(tgui_fancy))
 	tgui_lock		= sanitize_integer(tgui_lock, FALSE, TRUE, initial(tgui_lock))
 	buttons_locked	= sanitize_integer(buttons_locked, FALSE, TRUE, initial(buttons_locked))
@@ -194,7 +238,7 @@ SAVEFILE UPDATING/VERSIONING - 'Simplified', or rather, more coder-friendly ~Car
 	ambientocclusion	= sanitize_integer(ambientocclusion, FALSE, TRUE, initial(ambientocclusion))
 	auto_fit_viewport	= sanitize_integer(auto_fit_viewport, FALSE, TRUE, initial(auto_fit_viewport))
 	widescreenpref  = sanitize_integer(widescreenpref, FALSE, TRUE, initial(widescreenpref))
-	pixel_size		= sanitize_integer(pixel_size, PIXEL_SCALING_AUTO, PIXEL_SCALING_3X, initial(pixel_size))
+	pixel_size		= sanitize_float(pixel_size, PIXEL_SCALING_AUTO, PIXEL_SCALING_3X, 0.5, initial(pixel_size))
 	scaling_method  = sanitize_text(scaling_method, initial(scaling_method))
 	ghost_form		= sanitize_inlist(ghost_form, GLOB.ghost_forms, initial(ghost_form))
 	ghost_orbit 	= sanitize_inlist(ghost_orbit, GLOB.ghost_orbits, initial(ghost_orbit))
@@ -246,6 +290,7 @@ SAVEFILE UPDATING/VERSIONING - 'Simplified', or rather, more coder-friendly ~Car
 	WRITE_FILE(S["max_chat_length"], max_chat_length)
 	WRITE_FILE(S["see_chat_non_mob"], see_chat_non_mob)
 	WRITE_FILE(S["see_rc_emotes"], see_rc_emotes)
+	WRITE_FILE(S["broadcast_login_logout"], broadcast_login_logout)
 	WRITE_FILE(S["tgui_fancy"], tgui_fancy)
 	WRITE_FILE(S["tgui_lock"], tgui_lock)
 	WRITE_FILE(S["buttons_locked"], buttons_locked)

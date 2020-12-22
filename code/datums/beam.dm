@@ -1,24 +1,47 @@
-//Beam Datum and effect
-/datum/beam
-	var/atom/origin = null
-	var/atom/target = null
-	var/list/elements = list() //list of beams
-	var/icon/base_icon = null
-	var/icon
-	var/icon_state = "" //icon state of the main segments of the beam
-	var/beam_type = /obj/effect/ebeam //must be subtype
-	var/obj/effect/ebeam/visuals //what we add to the ebeam's visual contents. never gets deleted on redrawing.
 
-/datum/beam/New(beam_origin,beam_target,beam_icon='icons/effects/beam.dmi',beam_icon_state="b_beam",time=50,btype = /obj/effect/ebeam)
+/** # Beam Datum and Effect
+ * **IF YOU ARE LAZY AND DO NOT WANT TO READ, GO TO THE BOTTOM OF THE FILE AND USE THAT PROC!**
+ *
+ * This is the beam datum! It's a really neat effect for the game in drawing a line from one atom to another.
+ * It has two parts:
+ * The datum itself which manages redrawing the beam to constantly keep it pointing from the origin to the target.
+ * The effect which is what the beams are made out of. They're placed in a line from the origin to target, rotated towards the target and snipped off at the end.
+ * These effects are kept in a list and constantly created and destroyed (hence the proc names draw and reset, reset destroying all effects and draw creating more.)
+ *
+ * You can add more special effects to the beam itself by changing what the drawn beam effects do. For example you can make a vine that pricks people by making the beam_type
+ * include a crossed proc that damages the crosser. Examples in venus_human_trap.dm
+*/
+/datum/beam
+	///where the beam goes from
+	var/atom/origin = null
+	///where the beam goes to
+	var/atom/target = null
+	///list of beam objects. These have their visuals set by the visuals var which is created on starting
+	var/list/elements = list()
+	///icon used by the beam.
+	var/icon
+	///icon state of the main segments of the beam
+	var/icon_state = ""
+	///The beam will qdel if it's longer than this many tiles.
+	var/max_distance = 0
+	///the objects placed in the elements list
+	var/beam_type = /obj/effect/ebeam
+	///This is used as the visual_contents of beams, so you can apply one effect to this and the whole beam will look like that. never gets deleted on redrawing.
+	var/obj/effect/ebeam/visuals
+
+/datum/beam/New(beam_origin,beam_target,beam_icon='icons/effects/beam.dmi',beam_icon_state="b_beam",time=INFINITY,maxdistance=INFINITY,btype = /obj/effect/ebeam)
 	origin = beam_origin
 	target = beam_target
-	base_icon = new(beam_icon,beam_icon_state)
+	max_distance = maxdistance
 	icon = beam_icon
 	icon_state = beam_icon_state
 	beam_type = btype
 	if(time < INFINITY)
 		QDEL_IN(src, time)
 
+/**
+ * Proc called by the atom Beam() proc. Sets up signals, and draws the beam for the first time.
+ */
 /datum/beam/proc/Start()
 	visuals = new beam_type()
 	visuals.icon = icon
@@ -27,25 +50,33 @@
 	RegisterSignal(origin, COMSIG_MOVABLE_MOVED, .proc/redrawing)
 	RegisterSignal(target, COMSIG_MOVABLE_MOVED, .proc/redrawing)
 
+/**
+ * Triggered by signals set up when the beam is set up. If it's still sane to create a beam, it removes the old beam, creates a new one. Otherwise it kills the beam.
+ *
+ * Arguments:
+ * mover: either the origin of the beam or the target of the beam that moved.
+ * oldloc: from where mover moved.
+ * direction: in what direction mover moved from.
+ */
 /datum/beam/proc/redrawing(atom/movable/mover, atom/oldloc, direction)
-	Reset()
-	Draw()
-
-/datum/beam/proc/afterDraw()
-	return
-
-/datum/beam/proc/Reset()
-	for(var/obj/effect/ebeam/B in elements)
-		qdel(B)
-	elements.Cut()
+	if(origin && target && get_dist(origin,target)<max_distance && origin.z == target.z)
+		QDEL_LIST(elements)
+		Draw()
+	else
+		qdel(src)
 
 /datum/beam/Destroy()
-	Reset()
+	QDEL_LIST(elements)
 	qdel(visuals)
+	UnregisterSignal(origin, COMSIG_MOVABLE_MOVED)
+	UnregisterSignal(target, COMSIG_MOVABLE_MOVED)
 	target = null
 	origin = null
 	return ..()
 
+/**
+ * Creates the beam effects and places them in a line from the origin to the target. Sets their rotation to make the beams face the target, too.
+ */
 /datum/beam/proc/Draw()
 	var/Angle = round(Get_Angle(origin,target))
 	var/matrix/rot_matrix = matrix()
@@ -75,9 +106,9 @@
 		elements += X
 		//Assign our single visual ebeam to each ebeam's vis_contents
 		//ends are cropped by a transparent box icon of length-N pixel size laid over the visuals obj
-		if(N+32>length) //went past the target, needs to be cut short
-			var/icon/II = new(icon, icon_state) //the way to keep this the same as the vis_contents is unreasonable right now, maybe in the far future.
-			II.DrawBox(null,1,(length-N),32,32)//anyway we cut the icon on the ebeam to end at the target instead of overshooting
+		if(N+32>length) //went past the target, we draw a box of space to cut away from the beam sprite so the icon actually ends at the center of the target sprite
+			var/icon/II = new(icon, icon_state)//this means we exclude the overshooting object from the visual contents which does mean those visuals don't show up for the final bit of the beam...
+			II.DrawBox(null,1,(length-N),32,32)//in the future if you want to improve this, remove the drawbox and instead use a 513 filter to cut away at the final object's icon
 			X.icon = II
 		else
 			X.vis_contents += visuals
@@ -113,7 +144,6 @@
 			var/_step_y = abs(originp.step_y + targetp.step_y) / 2
 			X.forceStep(null, _step_x, _step_y)
 		CHECK_TICK
-	afterDraw()
 
 /obj/effect/ebeam
 	mouse_opacity = MOUSE_OPACITY_TRANSPARENT
@@ -129,7 +159,19 @@
 /obj/effect/ebeam/singularity_act()
 	return
 
-/atom/proc/Beam(atom/BeamTarget,icon_state="b_beam",icon='icons/effects/beam.dmi',time=50,beam_type=/obj/effect/ebeam)
-	var/datum/beam/newbeam = new(src,BeamTarget,icon,icon_state,time,beam_type)
+/**
+ * This is what you use to start a beam. Example: origin.Beam(target, args). **Store the return of this proc if you don't set maxdist or time, you need it to delete the beam.**
+ *
+ * Unless you're making a custom beam effect (see the beam_type argument), you won't actually have to mess with any other procs. Make sure you store the return of this Proc, you'll need it
+ * to kill the beam.
+ * **Arguments:**
+ * BeamTarget: Where you're beaming from. Where do you get origin? You didn't read the docs, fuck you.
+ * icon_state: What the beam's icon_state is. The datum effect isn't the ebeam object, it doesn't hold any icon and isn't type dependent.
+ * icon: What the beam's icon file is. Don't change this, man. All beam icons should be in beam.dmi anyways.
+ * maxdistance: how far the beam will go before stopping itself. Used mainly for two things: preventing lag if the beam may go in that direction and setting a range to abilities that use beams.
+ * beam_type: The type of your custom beam. This is for adding other wacky stuff for your beam only. Most likely, you won't (and shouldn't) change it.
+ */
+/atom/proc/Beam(atom/BeamTarget,icon_state="b_beam",icon='icons/effects/beam.dmi',time=INFINITY,maxdistance=INFINITY,beam_type=/obj/effect/ebeam)
+	var/datum/beam/newbeam = new(src,BeamTarget,icon,icon_state,time,maxdistance,beam_type)
 	INVOKE_ASYNC(newbeam, /datum/beam/.proc/Start)
 	return newbeam

@@ -30,8 +30,8 @@
 	if (recipe.output && loc && !QDELETED(src))
 		for(var/i = 0, i < (rating_amount * recipe.multiplier), i++)
 			new recipe.output(drop_location()[1])
-	if (ismob(what))
-		var/mob/themob = what
+	if (isliving(what))
+		var/mob/living/themob = what
 		themob.gib(TRUE,TRUE,TRUE)
 	else
 		qdel(what)
@@ -62,7 +62,9 @@
 	if(istype(O, /obj/item/storage/bag/tray))
 		var/obj/item/storage/T = O
 		var/loaded = 0
-		for(var/obj/item/reagent_containers/food/snacks/S in T.contents)
+		for(var/obj/S in T.contents)
+			if(!IS_EDIBLE(S))
+				continue
 			var/datum/food_processor_process/P = select_recipe(S)
 			if(P)
 				if(SEND_SIGNAL(T, COMSIG_TRY_STORAGE_TAKE, S, src))
@@ -123,7 +125,7 @@
 			log_admin("DEBUG: [O] in processor doesn't have a suitable recipe. How do you put it in?")
 			continue
 		process_food(P, O)
-	pixel_x = initial(pixel_x) //return to its spot after shaking
+	pixel_x = base_pixel_x //return to its spot after shaking
 	processing = FALSE
 	visible_message("<span class='notice'>\The [src] finishes processing.</span>")
 
@@ -131,24 +133,18 @@
 	set category = "Object"
 	set name = "Eject Contents"
 	set src in oview(1)
-	if(usr.stat || usr.restrained())
+	if(usr.stat != CONSCIOUS || HAS_TRAIT(usr, TRAIT_HANDS_BLOCKED))
 		return
 	if(isliving(usr))
 		var/mob/living/L = usr
 		if(!(L.mobility_flags & MOBILITY_UI))
 			return
-	empty()
+	dump_inventory_contents()
 	add_fingerprint(usr)
 
 /obj/machinery/processor/container_resist_act(mob/living/user)
 	user.forceMove(drop_location())
 	user.visible_message("<span class='notice'>[user] crawls free of the processor!</span>")
-
-/obj/machinery/processor/proc/empty()
-	for (var/obj/O in src)
-		O.forceMove(drop_location())
-	for (var/mob/M in src)
-		M.forceMove(drop_location())
 
 /obj/machinery/processor/slime
 	name = "slime processor"

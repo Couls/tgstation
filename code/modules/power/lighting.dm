@@ -9,11 +9,14 @@
 #define LIGHT_BROKEN 2
 #define LIGHT_BURNED 3
 
-#define BROKEN_SPARKS_MIN (30 SECONDS)
-#define BROKEN_SPARKS_MAX (90 SECONDS)
+#define BROKEN_SPARKS_MIN (3 MINUTES)
+#define BROKEN_SPARKS_MAX (9 MINUTES)
 
-#define LIGHT_DRAIN_TIME 30
-#define LIGHT_POWER_GAIN 2
+#define LIGHT_DRAIN_TIME 25
+#define LIGHT_POWER_GAIN 35
+
+//How many reagents the lights can hold
+#define LIGHT_REAGENT_CAPACITY 5
 
 /obj/item/wallframe/light_fixture
 	name = "light fixture frame"
@@ -94,12 +97,16 @@
 		cell = null
 		add_fingerprint(user)
 
+
 /obj/structure/light_construct/attack_tk(mob/user)
-	if(cell)
-		to_chat(user, "<span class='notice'>You telekinetically remove [cell].</span>")
-		cell.forceMove(drop_location())
-		cell.attack_tk(user)
-		cell = null
+	if(!cell)
+		return
+	to_chat(user, "<span class='notice'>You telekinetically remove [cell].</span>")
+	var/obj/item/stock_parts/cell/cell_reference = cell
+	cell = null
+	cell_reference.forceMove(drop_location())
+	return cell_reference.attack_tk(user)
+
 
 /obj/structure/light_construct/attackby(obj/item/W, mob/user, params)
 	add_fingerprint(user)
@@ -220,7 +227,7 @@
 	var/static_power_used = 0
 	var/brightness = 8			// luminosity when on, also used in power calculation
 	var/bulb_power = 1			// basically the alpha of the emitted light source
-	var/bulb_colour = "#FFFFFF"	// befault colour of the light.
+	var/bulb_colour = "#f3fffa"	// befault colour of the light.
 	var/status = LIGHT_OK		// LIGHT_OK, _EMPTY, _BURNED or _BROKEN
 	var/flickering = FALSE
 	var/light_type = /obj/item/light/tube		// the type of light item
@@ -252,30 +259,6 @@
 	status = LIGHT_BROKEN
 	icon_state = "tube-broken"
 
-/obj/machinery/light/dim
-	nightshift_allowed = FALSE
-	bulb_colour = "#FFDDCC"
-	bulb_power = 0.8
-
-// the smaller bulb light fixture
-
-/obj/machinery/light/small
-	icon_state = "bulb"
-	base_state = "bulb"
-	fitting = "bulb"
-	brightness = 4
-	desc = "A small lighting fixture."
-	light_type = /obj/item/light/bulb
-
-/obj/machinery/light/small/broken
-	status = LIGHT_BROKEN
-	icon_state = "bulb-broken"
-
-/obj/machinery/light/Move()
-	if(status != LIGHT_BROKEN)
-		break_light_tube(1)
-	return ..()
-
 /obj/machinery/light/built
 	icon_state = "tube-empty"
 	start_with_cell = FALSE
@@ -284,6 +267,57 @@
 	. = ..()
 	status = LIGHT_EMPTY
 	update(0)
+
+
+/obj/machinery/light/no_nightlight
+	nightshift_enabled = FALSE
+
+/obj/machinery/light/warm
+	bulb_colour = "#fae5c1"
+
+/obj/machinery/light/warm/no_nightlight
+	nightshift_allowed = FALSE
+
+/obj/machinery/light/cold
+	bulb_colour = "#deefff"
+	nightshift_light_color = "#deefff"
+
+/obj/machinery/light/cold/no_nightlight
+	nightshift_allowed = FALSE
+
+/obj/machinery/light/red
+	bulb_colour = "#FF3232"
+	nightshift_allowed = FALSE
+	no_emergency = TRUE
+	brightness = 2
+	bulb_power = 0.7
+
+/obj/machinery/light/blacklight
+	bulb_colour = "#A700FF"
+	nightshift_allowed = FALSE
+	brightness = 2
+	bulb_power = 0.8
+
+/obj/machinery/light/dim
+	nightshift_allowed = FALSE
+	bulb_colour = "#FFDDCC"
+	bulb_power = 0.6
+
+// the smaller bulb light fixture
+
+/obj/machinery/light/small
+	icon_state = "bulb"
+	base_state = "bulb"
+	fitting = "bulb"
+	brightness = 4
+	nightshift_brightness = 4
+	bulb_colour = "#FFD6AA"
+	desc = "A small lighting fixture."
+	light_type = /obj/item/light/bulb
+
+/obj/machinery/light/small/broken
+	status = LIGHT_BROKEN
+	icon_state = "bulb-broken"
 
 /obj/machinery/light/small/built
 	icon_state = "bulb-empty"
@@ -294,7 +328,23 @@
 	status = LIGHT_EMPTY
 	update(0)
 
+/obj/machinery/light/small/red
+	bulb_colour = "#FF3232"
+	no_emergency = TRUE
+	nightshift_allowed = FALSE
+	brightness = 1
+	bulb_power = 0.8
 
+/obj/machinery/light/small/blacklight
+	bulb_colour = "#A700FF"
+	nightshift_allowed = FALSE
+	brightness = 1
+	bulb_power = 0.9
+
+/obj/machinery/light/Move()
+	if(status != LIGHT_BROKEN)
+		break_light_tube(1)
+	return ..()
 
 // create a new lighting fixture
 /obj/machinery/light/Initialize(mapload)
@@ -339,7 +389,7 @@
 	switch(status)		// set icon_states
 		if(LIGHT_OK)
 			var/area/A = get_area(src)
-			if(emergency_mode || (A && A.fire))
+			if(emergency_mode || (A?.fire))
 				icon_state = "[base_state]_emergency"
 			else
 				icon_state = "[base_state]"
@@ -370,7 +420,7 @@
 		if(color)
 			CO = color
 		var/area/A = get_area(src)
-		if (A && A.fire)
+		if (A?.fire)
 			CO = bulb_emergency_colour
 		else if (nightshift_enabled)
 			BR = nightshift_brightness
@@ -730,8 +780,8 @@
 
 	to_chat(user, "<span class='notice'>You telekinetically remove the light [fitting].</span>")
 	// create a light tube/bulb item and put it in the user's hand
-	var/obj/item/light/L = drop_light_tube()
-	L.attack_tk(user)
+	var/obj/item/light/light_tube = drop_light_tube()
+	return light_tube.attack_tk(user)
 
 
 // break the light and make sparks if was on
@@ -820,6 +870,7 @@
 	base_state = "ltube"
 	inhand_icon_state = "c_tube"
 	brightness = 8
+	custom_price = PAYCHECK_EASY * 0.5
 
 /obj/item/light/tube/broken
 	status = LIGHT_BROKEN
@@ -833,6 +884,7 @@
 	lefthand_file = 'icons/mob/inhands/equipment/medical_lefthand.dmi'
 	righthand_file = 'icons/mob/inhands/equipment/medical_righthand.dmi'
 	brightness = 4
+	custom_price = PAYCHECK_EASY * 0.4
 
 /obj/item/light/bulb/broken
 	status = LIGHT_BROKEN
@@ -857,6 +909,7 @@
 
 /obj/item/light/Initialize()
 	. = ..()
+	create_reagents(LIGHT_REAGENT_CAPACITY, INJECTABLE | DRAINABLE)
 	update()
 
 /obj/item/light/ComponentInitialize()
@@ -875,21 +928,11 @@
 
 // attack bulb/tube with object
 // if a syringe, can inject plasma to make it explode
-/obj/item/light/attackby(obj/item/I, mob/user, params)
-	..()
-	if(istype(I, /obj/item/reagent_containers/syringe))
-		var/obj/item/reagent_containers/syringe/S = I
+/obj/item/light/on_reagent_change(changetype)
+	rigged = (reagents.has_reagent(/datum/reagent/toxin/plasma, LIGHT_REAGENT_CAPACITY)) //has_reagent returns the reagent datum
+	return ..()
 
-		to_chat(user, "<span class='notice'>You inject the solution into \the [src].</span>")
-
-		if(S.reagents.has_reagent(/datum/reagent/toxin/plasma, 5))
-
-			rigged = TRUE
-
-		S.reagents.clear_reagents()
-	else
-		..()
-	return
+#undef LIGHT_REAGENT_CAPACITY
 
 /obj/item/light/attack(mob/living/M, mob/living/user, def_zone)
 	..()

@@ -53,6 +53,7 @@
 	var/inertia_dir = 0
 	var/atom/inertia_last_loc
 	var/inertia_moving = FALSE
+	/// Things we can pass through while moving. If any of this matches the thing we're trying to pass's [pass_flags_self], then we can pass through.
 	var/pass_flags = NONE
 	/// If false makes [CanPass][/atom/proc/CanPass] call [CanPassThrough][/atom/movable/proc/CanPassThrough] on this type instead of using default behaviour
 	var/generic_canpass = TRUE
@@ -104,8 +105,11 @@
 			vis_contents += em_block
 	if(opacity)
 		AddElement(/datum/element/light_blocking)
-	if(light_system == MOVABLE_LIGHT)
-		AddComponent(/datum/component/overlay_lighting)
+	switch(light_system)
+		if(MOVABLE_LIGHT)
+			AddComponent(/datum/component/overlay_lighting)
+		if(MOVABLE_LIGHT_DIRECTIONAL)
+			AddComponent(/datum/component/overlay_lighting, is_directional = TRUE)
 
 
 /atom/movable/Destroy(force)
@@ -205,38 +209,48 @@
 			return FALSE
 	return T.zPassOut(src, direction, destination) && destination.zPassIn(src, direction, T)
 
+
 /atom/movable/vv_edit_var(var_name, var_value)
 	switch(var_name)
-		if(NAMEOF(src, anchored))
-			set_anchored(var_value)
-			return TRUE
 		if(NAMEOF(src, x))
 			var/turf/T = locate(var_value, y, z)
 			if(T)
-				forceMove(T)
+				admin_teleport(T)
 				return TRUE
 			return FALSE
 		if(NAMEOF(src, y))
 			var/turf/T = locate(x, var_value, z)
 			if(T)
-				forceMove(T)
+				admin_teleport(T)
 				return TRUE
 			return FALSE
 		if(NAMEOF(src, z))
 			var/turf/T = locate(x, y, var_value)
 			if(T)
-				forceMove(T)
+				admin_teleport(T)
 				return TRUE
 			return FALSE
 		if(NAMEOF(src, loc))
-			if(istype(var_value, /atom))
-				forceMove(var_value)
-				return TRUE
-			else if(isnull(var_value))
-				moveToNullspace()
+			if(isatom(var_value) || isnull(var_value))
+				admin_teleport(var_value)
 				return TRUE
 			return FALSE
+		if(NAMEOF(src, anchored))
+			set_anchored(var_value)
+			. = TRUE
+		if(NAMEOF(src, pulledby))
+			set_pulledby(var_value)
+			. = TRUE
+		if(NAMEOF(src, glide_size))
+			set_glide_size(var_value)
+			. = TRUE
+
+	if(!isnull(.))
+		datum_flags |= DF_VAR_EDITED
+		return
+
 	return ..()
+
 
 /atom/movable/proc/start_pulling(atom/movable/AM, state, force = move_force, supress_message = FALSE)
 	if(QDELETED(AM))
@@ -282,13 +296,9 @@
 		pulling.set_pulledby(null)
 		if(!isliving(pulling))
 			pulling.set_sidestep(initial(pulling.can_sidestep))
-		var/atom/movable/ex_pulled = pulling
 		setGrabState(GRAB_PASSIVE)
 		pulling = null
-		if(isliving(ex_pulled))
-			var/mob/living/L = ex_pulled
-			L.update_mobility()// mob gets up if it was lyng down in a chokehold
-			L.update_movespeed() // set their movespeed to the usual
+
 
 ///Reports the event of the change in value of the pulledby variable.
 /atom/movable/proc/set_pulledby(new_pulledby)
@@ -832,21 +842,21 @@
 
 
 /**
-  * Called whenever an object moves and by mobs when they attempt to move themselves through space
-  * And when an object or action applies a force on src, see [newtonian_move][/atom/movable/proc/newtonian_move]
-  *
-  * Return 0 to have src start/keep drifting in a no-grav area and 1 to stop/not start drifting
-  *
-  * Mobs should return 1 if they should be able to move of their own volition, see [/client/proc/Move]
-  *
-  * Arguments:
-  * * movement_dir - 0 when stopping or any dir when trying to move
-  */
+ * Called whenever an object moves and by mobs when they attempt to move themselves through space
+ * And when an object or action applies a force on src, see [newtonian_move][/atom/movable/proc/newtonian_move]
+ *
+ * Return 0 to have src start/keep drifting in a no-grav area and 1 to stop/not start drifting
+ *
+ * Mobs should return 1 if they should be able to move of their own volition, see [/client/proc/Move]
+ *
+ * Arguments:
+ * * movement_dir - 0 when stopping or any dir when trying to move
+ */
 /atom/movable/proc/Process_Spacemove(movement_dir = 0)
 	if(has_gravity(src))
 		return TRUE
 
-	if(pulledby)
+	if(pulledby && (pulledby.pulledby != src || moving_from_pull))
 		return TRUE
 
 	if(throwing)
@@ -1026,11 +1036,11 @@
 
 /// called when this atom is removed from a storage item, which is passed on as S. The loc variable is already set to the new destination before this is called.
 /atom/movable/proc/on_exit_storage(datum/component/storage/concrete/master_storage)
-	SEND_SIGNAL(src, CONSIG_STORAGE_EXITED, master_storage)
+	SEND_SIGNAL(src, COMSIG_STORAGE_EXITED, master_storage)
 
 /// called when this atom is added into a storage item, which is passed on as S. The loc variable is already set to the storage item.
 /atom/movable/proc/on_enter_storage(datum/component/storage/concrete/master_storage)
-	SEND_SIGNAL(src, COMISG_STORAGE_ENTERED, master_storage)
+	SEND_SIGNAL(src, COMSIG_STORAGE_ENTERED, master_storage)
 
 /atom/movable/proc/get_spacemove_backup()
 	for(var/A in obounds(src, 16))
@@ -1139,12 +1149,11 @@
 	if(throwing)
 		return
 	if(on && !(movement_type & FLOATING))
-		animate(src, pixel_y = pixel_y + 2, time = 10, loop = -1)
-		sleep(10)
-		animate(src, pixel_y = pixel_y - 2, time = 10, loop = -1)
+		animate(src, pixel_y = 2, time = 10, loop = -1, flags = ANIMATION_RELATIVE)
+		animate(pixel_y = -2, time = 10, loop = -1, flags = ANIMATION_RELATIVE)
 		setMovetype(movement_type | FLOATING)
 	else if (!on && (movement_type & FLOATING))
-		animate(src, pixel_y = initial(pixel_y), time = 10)
+		animate(src, pixel_y = base_pixel_y, time = 10)
 		setMovetype(movement_type & ~FLOATING)
 
 
@@ -1251,26 +1260,32 @@
 	return TRUE
 
 /**
-  * Updates the grab state of the movable
-  *
-  * This exists to act as a hook for behaviour
-  */
+ * Updates the grab state of the movable
+ *
+ * This exists to act as a hook for behaviour
+ */
 /atom/movable/proc/setGrabState(newstate)
 	if(newstate == grab_state)
 		return
 	SEND_SIGNAL(src, COMSIG_MOVABLE_SET_GRAB_STATE, newstate)
 	. = grab_state
 	grab_state = newstate
-	switch(.) //Previous state.
-		if(GRAB_PASSIVE, GRAB_AGGRESSIVE)
-			if(grab_state >= GRAB_NECK)
-				ADD_TRAIT(pulling, TRAIT_IMMOBILIZED, CHOKEHOLD_TRAIT)
-				ADD_TRAIT(pulling, TRAIT_FLOORED, CHOKEHOLD_TRAIT)
-	switch(grab_state) //Current state.
-		if(GRAB_PASSIVE, GRAB_AGGRESSIVE)
-			if(. >= GRAB_NECK)
-				REMOVE_TRAIT(pulling, TRAIT_IMMOBILIZED, CHOKEHOLD_TRAIT)
+	switch(grab_state) // Current state.
+		if(GRAB_PASSIVE)
+			REMOVE_TRAIT(pulling, TRAIT_IMMOBILIZED, CHOKEHOLD_TRAIT)
+			REMOVE_TRAIT(pulling, TRAIT_HANDS_BLOCKED, CHOKEHOLD_TRAIT)
+			if(. >= GRAB_NECK) // Previous state was a a neck-grab or higher.
 				REMOVE_TRAIT(pulling, TRAIT_FLOORED, CHOKEHOLD_TRAIT)
+		if(GRAB_AGGRESSIVE)
+			if(. >= GRAB_NECK) // Grab got downgraded.
+				REMOVE_TRAIT(pulling, TRAIT_FLOORED, CHOKEHOLD_TRAIT)
+			else // Grab got upgraded from a passive one.
+				ADD_TRAIT(pulling, TRAIT_IMMOBILIZED, CHOKEHOLD_TRAIT)
+				ADD_TRAIT(pulling, TRAIT_HANDS_BLOCKED, CHOKEHOLD_TRAIT)
+		if(GRAB_NECK, GRAB_KILL)
+			if(. <= GRAB_AGGRESSIVE)
+				ADD_TRAIT(pulling, TRAIT_FLOORED, CHOKEHOLD_TRAIT)
+
 
 
 /obj/item/proc/do_pickup_animation(atom/target)
@@ -1289,8 +1304,8 @@
 	I.appearance_flags = APPEARANCE_UI_IGNORE_ALPHA
 	var/turf/T = get_turf(src)
 	var/direction
-	var/to_x = 0
-	var/to_y = 0
+	var/to_x = target.base_pixel_x
+	var/to_y = target.base_pixel_y
 
 	if(!QDELETED(T) && !QDELETED(target))
 		direction = get_dir(T, target)
@@ -1314,3 +1329,11 @@
 	animate(I, alpha = 175, pixel_x = to_x, pixel_y = to_y, time = 3, transform = M, easing = CUBIC_EASING)
 	sleep(1)
 	animate(I, alpha = 0, transform = matrix(), time = 1)
+
+/**
+* A wrapper for setDir that should only be able to fail by living mobs.
+*
+* Called from [/atom/movable/proc/keyLoop], this exists to be overwritten by living mobs with a check to see if we're actually alive enough to change directions
+*/
+/atom/movable/proc/keybind_face_direction(direction)
+	setDir(direction)

@@ -39,7 +39,7 @@
 #define APC_FULLY_CHARGED 2
 
 #define APC_DRAIN_TIME 75
-#define APC_POWER_GAIN 10
+#define APC_POWER_GAIN 200
 
 // the Area Power Controller (APC), formerly Power Distribution Unit (PDU)
 // one per area, needs wire connection to power network through a terminal
@@ -780,7 +780,7 @@
 			to_chat(user, "<span class='warning'>Nothing happens!</span>")
 		else
 			flick("apc-spark", src)
-			playsound(src, "sparks", 75, TRUE)
+			playsound(src, "sparks", 75, TRUE, SHORT_RANGE_SOUND_EXTRARANGE)
 			obj_flags |= EMAGGED
 			locked = FALSE
 			to_chat(user, "<span class='notice'>You emag the APC interface.</span>")
@@ -819,7 +819,7 @@
 					to_chat(H, "<span class='warning'>You can't receive charge from the APC!</span>")
 			return
 		if((H.a_intent == INTENT_GRAB) && (E.drain_time < world.time))
-			if(cell.charge == cell.maxcharge)
+			if(cell.charge >= cell.maxcharge - APC_POWER_GAIN)
 				to_chat(H, "<span class='warning'>The APC is full!</span>")
 				return
 			var/obj/item/organ/stomach/ethereal/stomach = H.getorganslot(ORGAN_SLOT_STOMACH)
@@ -1056,8 +1056,8 @@
 	malf.malfhack = src
 	malf.malfhacking = addtimer(CALLBACK(malf, /mob/living/silicon/ai/.proc/malfhacked, src), 600, TIMER_STOPPABLE)
 
-	var/obj/screen/alert/hackingapc/A
-	A = malf.throw_alert("hackingapc", /obj/screen/alert/hackingapc)
+	var/atom/movable/screen/alert/hackingapc/A
+	A = malf.throw_alert("hackingapc", /atom/movable/screen/alert/hackingapc)
 	A.target = src
 
 /obj/machinery/power/apc/proc/malfoccupy(mob/living/silicon/ai/malf)
@@ -1168,7 +1168,7 @@
 		return 0
 
 /obj/machinery/power/apc/add_load(amount)
-	if(terminal && terminal.powernet)
+	if(terminal?.powernet)
 		terminal.add_load(amount)
 
 /obj/machinery/power/apc/avail(amount)
@@ -1182,7 +1182,7 @@
 		update_icon()
 	if(machine_stat & (BROKEN|MAINT))
 		return
-	if(!area.requires_power)
+	if(!area || !area.requires_power)
 		return
 	if(failure_timer)
 		update()
@@ -1490,5 +1490,4 @@
 /obj/item/electronics/apc
 	name = "power control module"
 	icon_state = "power_mod"
-	custom_price = 50
 	desc = "Heavy-duty switching circuits for power control."

@@ -1,3 +1,4 @@
+/// The gravitational singularity
 /obj/singularity
 	name = "gravitational singularity"
 	desc = "A gravitational singularity."
@@ -8,52 +9,59 @@
 	move_resist = INFINITY
 	layer = MASSIVE_OBJ_LAYER
 	light_range = 6
-	appearance_flags = 0
-	step_size = 3
-	movement_type = FLOATING | UNSTOPPABLE
-	resistance_flags = INDESTRUCTIBLE | LAVA_PROOF | FIRE_PROOF | UNACIDABLE | ACID_PROOF | FREEZE_PROOF
-	obj_flags = CAN_BE_HIT | DANGEROUS_POSSESSION
+	step_size = 3	
+	appearance_flags = LONG_GLIDE
+
+	/// The singularity component itself.
+	/// A weak ref in case an admin removes the component to preserve the functionality.
+	var/datum/weakref/singularity_component
+
 	var/current_size = 1
 	var/allowed_size = 1
-	var/contained = 1 //Are we going to move around?
 	var/energy = 100 //How strong are we?
 	var/dissipate = TRUE //Do we lose energy over time?
-	var/dissipate_delay = 10
-	var/dissipate_track = 0
-	var/dissipate_strength = 1 //How much energy do we lose?
-	var/move_self = 1 //Do we move on our own?
-	var/grav_pull = 4 //How many tiles out do we pull?
+	/// How long should it take for us to dissipate in seconds?
+	var/dissipate_delay = 20
+	/// How much energy do we lose every dissipate_delay?
+	var/dissipate_strength = 1
+	/// How long its been (in seconds) since the last dissipation
+	var/time_since_last_dissipiation = 0
 	var/event_chance = 10 //Prob for event each tick
-	var/target = null //its target. moves towards the target if it has one
-	/// The direction of failed moves
-	var/last_failed_movement = 0
-	/// The next time movement will be calculated
-	var/next_movement_change = 0
-	var/last_warning
-	var/consumedSupermatter = 0 //If the singularity has eaten a supermatter shard and can go to stage six
-	var/drifting_dir = 0 // Chosen direction to drift in
+	var/move_self = TRUE
+	var/consumed_supermatter = FALSE //If the singularity has eaten a supermatter shard and can go to stage six
+
+	flags_1 = SUPERMATTER_IGNORES_1
 	resistance_flags = INDESTRUCTIBLE | LAVA_PROOF | FIRE_PROOF | UNACIDABLE | ACID_PROOF | FREEZE_PROOF
 	obj_flags = CAN_BE_HIT | DANGEROUS_POSSESSION
 
 /obj/singularity/Initialize(mapload, starting_energy = 50)
-	//CARN: admin-alert for chuckle-fuckery.
-	admin_investigate_setup()
-
-	src.energy = starting_energy
 	. = ..()
+
+	energy = starting_energy
+
 	START_PROCESSING(SSobj, src)
-	GLOB.poi_list |= src
+	AddElement(/datum/element/point_of_interest)
 	GLOB.singularities |= src
-	for(var/obj/machinery/power/singularity_beacon/singubeacon in GLOB.machines)
-		if(singubeacon.active)
-			target = singubeacon
+
+	var/datum/component/singularity/new_component = AddComponent(
+		/datum/component/singularity, \
+		consume_callback = CALLBACK(src, .proc/consume), \
+	)
+
+	singularity_component = WEAKREF(new_component)
+
+	expand(current_size)
+
+	for (var/obj/machinery/power/singularity_beacon/singubeacon in GLOB.machines)
+		if (singubeacon.active)
+			new_component.target = singubeacon
 			break
-	AddElement(/datum/element/bsa_blocker)
-	RegisterSignal(src, COMSIG_ATOM_BSA_BEAM, .proc/bluespace_reaction)
+
+	if (!mapload)
+		notify_ghosts("IT'S LOOSE", source = src, action = NOTIFY_ORBIT, flashwindow = FALSE, ghost_sound = 'sound/machines/warning-buzzer.ogg', header = "IT'S LOOSE", notify_volume = 75)
 
 /obj/singularity/Destroy()
 	STOP_PROCESSING(SSobj, src)
-	GLOB.poi_list.Remove(src)
 	GLOB.singularities.Remove(src)
 	return ..()
 
@@ -76,31 +84,50 @@
 
 /obj/singularity/attack_animal(mob/user)
 	consume(user)
+/obj/singularity/attack_tk(mob/user)
+	if(!iscarbon(user))
+		return
+	. = COMPONENT_CANCEL_ATTACK_CHAIN
+	var/mob/living/carbon/jedi = user
+	jedi.visible_message(
+		"<span class='danger'>[jedi]'s head begins to collapse in on itself!</span>",
+		"<span class='userdanger'>Your head feels like it's collapsing in on itself! This was really not a good idea!</span>",
+		"<span class='hear'>You hear something crack and explode in gore.</span>"
+		)
+	jedi.Stun(3 SECONDS)
+	new /obj/effect/gibspawner/generic(get_turf(jedi), jedi)
+	jedi.apply_damage(30, BRUTE, BODY_ZONE_HEAD)
+	if(QDELETED(jedi))
+		return // damage was too much
+	if(jedi.stat == DEAD)
+		jedi.ghostize()
+		var/obj/item/bodypart/head/rip_u = jedi.get_bodypart(BODY_ZONE_HEAD)
+		rip_u.dismember(BURN) //nice try jedi
+		qdel(rip_u)
+		return
+	addtimer(CALLBACK(GLOBAL_PROC, .proc/carbon_tk_part_two, jedi), 0.1 SECONDS)
 
-/obj/singularity/attackby(obj/item/W, mob/user, params)
-	consume(user)
-	return TRUE
 
 // We don't drift around space, they drift around us
 /obj/singularity/Process_Spacemove()
 	return TRUE
+	
+/obj/singularity/proc/carbon_tk_part_two(mob/living/carbon/jedi)
+	if(QDELETED(jedi))
+		return
+	new /obj/effect/gibspawner/generic(get_turf(jedi), jedi)
+	jedi.apply_damage(30, BRUTE, BODY_ZONE_HEAD)
+	if(QDELETED(jedi))
+		return // damage was too much
+	if(jedi.stat == DEAD)
+		jedi.ghostize()
+		var/obj/item/bodypart/head/rip_u = jedi.get_bodypart(BODY_ZONE_HEAD)
+		if(rip_u)
+			rip_u.dismember(BURN)
+			qdel(rip_u)
+		return
+	addtimer(CALLBACK(GLOBAL_PROC, .proc/carbon_tk_part_three, jedi), 0.1 SECONDS)
 
-/obj/singularity/blob_act(obj/structure/blob/B)
-	return
-
-/obj/singularity/attack_tk(mob/user)
-	if(iscarbon(user))
-		var/mob/living/carbon/C = user
-		C.visible_message("<span class='danger'>[C]'s head begins to collapse in on itself!</span>", "<span class='userdanger'>Your head feels like it's collapsing in on itself! This was really not a good idea!</span>", "<span class='hear'>You hear something crack and explode in gore.</span>")
-		var/turf/T = get_turf(C)
-		for(var/i in 1 to 3)
-			C.apply_damage(30, BRUTE, BODY_ZONE_HEAD)
-			new /obj/effect/gibspawner/generic(T, C)
-			stoplag(1)
-		C.ghostize()
-		var/obj/item/bodypart/head/rip_u = C.get_bodypart(BODY_ZONE_HEAD)
-		rip_u.dismember(BURN) //nice try jedi
-		qdel(rip_u)
 
 /obj/singularity/ex_act(severity, target)
 	if(!severity)
@@ -147,9 +174,39 @@
 		step_size = 6
 		if(prob(event_chance)) //Chance for it to run a special event TODO:Come up with one or two more that fit
 			event()
-	eat()
-	dissipate()
+	dissipate(delta_time)
 	check_energy()
+	
+/obj/singularity/proc/carbon_tk_part_three(mob/living/carbon/jedi)
+	if(QDELETED(jedi))
+		return
+	new /obj/effect/gibspawner/generic(get_turf(jedi), jedi)
+	jedi.apply_damage(30, BRUTE, BODY_ZONE_HEAD)
+	if(QDELETED(jedi))
+		return // damage was too much
+	jedi.ghostize()
+	var/obj/item/bodypart/head/rip_u = jedi.get_bodypart(BODY_ZONE_HEAD)
+	if(rip_u)
+		rip_u.dismember(BURN)
+		qdel(rip_u)
+
+/obj/singularity/ex_act(severity, target)
+	switch(severity)
+		if(1)
+			if(current_size <= STAGE_TWO)
+				investigate_log("has been destroyed by a heavy explosion.", INVESTIGATE_SINGULO)
+				qdel(src)
+				return
+			else
+				energy -= round(((energy+1)/2),1)
+		if(2)
+			energy -= round(((energy+1)/3),1)
+		if(3)
+			energy -= round(((energy+1)/4),1)
+
+/obj/singularity/process(delta_time)
+	if(current_size >= STAGE_TWO)
+		if(prob(event_chance))//Chance for it to run a special event TODO:Come up with one or two more that fit
 
 /obj/singularity/attack_ai() //to prevent ais from gibbing themselves when they click on one.
 	return
@@ -165,18 +222,19 @@
 /obj/singularity/proc/dissipate()
 	if(!dissipate)
 		return
-	if(dissipate_track >= dissipate_delay)
-		src.energy -= dissipate_strength
-		dissipate_track = 0
-	else
-		dissipate_track++
 
 /obj/singularity/proc/expand(force_size = 0)
 	var/temp_allowed_size = src.allowed_size
+
 	if(force_size)
 		temp_allowed_size = force_size
-	if(temp_allowed_size >= STAGE_SIX && !consumedSupermatter)
+
+	if(temp_allowed_size >= STAGE_SIX && !consumed_supermatter)
 		temp_allowed_size = STAGE_FIVE
+
+	var/new_grav_pull
+	var/new_consume_range
+
 	switch(temp_allowed_size)
 		if(STAGE_ONE)
 			current_size = STAGE_ONE
@@ -188,9 +246,10 @@
 			bound_y = 0
 			pixel_x = 0
 			pixel_y = 0
-			grav_pull = 4
+			new_grav_pull = 4
+			new_consume_range = 0
 			dissipate_delay = 10
-			dissipate_track = 0
+			time_since_last_dissipiation = 0
 			dissipate_strength = 1
 		if(STAGE_TWO)
 			if(check_cardinals_range(1))
@@ -203,9 +262,10 @@
 				bound_y = -32
 				pixel_x = -32
 				pixel_y = -32
-				grav_pull = 6
+				new_grav_pull = 6
+				new_consume_range = 1
 				dissipate_delay = 5
-				dissipate_track = 0
+				time_since_last_dissipiation = 0
 				dissipate_strength = 5
 		if(STAGE_THREE)
 			if(check_cardinals_range(2))
@@ -218,9 +278,10 @@
 				bound_y = -64
 				pixel_x = -64
 				pixel_y = -64
-				grav_pull = 8
+				new_grav_pull = 8
+				new_consume_range = 2
 				dissipate_delay = 4
-				dissipate_track = 0
+				time_since_last_dissipiation = 0
 				dissipate_strength = 20
 		if(STAGE_FOUR)
 			if(check_cardinals_range(3))
@@ -233,9 +294,10 @@
 				bound_y = -96
 				pixel_x = -96
 				pixel_y = -96
-				grav_pull = 10
+				new_grav_pull = 10
+				new_consume_range = 3
 				dissipate_delay = 10
-				dissipate_track = 0
+				time_since_last_dissipiation = 0
 				dissipate_strength = 10
 		if(STAGE_FIVE)//this one also lacks a check for gens because it eats everything
 			current_size = STAGE_FIVE
@@ -247,8 +309,9 @@
 			bound_y = -128
 			pixel_x = -128
 			pixel_y = -128
-			grav_pull = 10
-			dissipate = 0 //It cant go smaller due toe loss
+			new_grav_pull = 10
+			new_consume_range = 4
+			dissipate = FALSE //It cant go smaller due to e loss
 		if(STAGE_SIX) //This only happens if a stage 5 singulo consumes a supermatter shard.
 			current_size = STAGE_SIX
 			icon = 'icons/effects/352x352.dmi'
@@ -259,8 +322,18 @@
 			bound_y = -160
 			pixel_x = -160
 			pixel_y = -160
-			grav_pull = 15
-			dissipate = 0
+			new_grav_pull = 15
+			new_consume_range = 5
+			dissipate = FALSE
+
+	var/datum/component/singularity/resolved_singularity = singularity_component.resolve()
+	if (!isnull(resolved_singularity))
+		resolved_singularity.consume_range = new_consume_range
+		resolved_singularity.grav_pull = new_grav_pull
+		resolved_singularity.disregard_failed_movements = current_size >= STAGE_FIVE
+		resolved_singularity.roaming = move_self && current_size >= STAGE_TWO
+		resolved_singularity.singularity_size = current_size
+
 	if(current_size == allowed_size)
 		investigate_log("<font color='red'>grew to size [current_size]</font>", INVESTIGATE_SINGULO)
 		return TRUE
@@ -284,7 +357,7 @@
 		if(1000 to 1999)
 			allowed_size = STAGE_FOUR
 		if(2000 to INFINITY)
-			if(energy >= 3000 && consumedSupermatter)
+			if(energy >= 3000 && consumed_supermatter)
 				allowed_size = STAGE_SIX
 			else
 				allowed_size = STAGE_FIVE
@@ -338,11 +411,11 @@
 		return FALSE
 	else if(locate(/obj/machinery/field/generator) in T)
 		var/obj/machinery/field/generator/G = locate(/obj/machinery/field/generator) in T
-		if(G && G.active)
+		if(G?.active)
 			return FALSE
 	else if(locate(/obj/machinery/power/shieldwallgen) in T)
 		var/obj/machinery/power/shieldwallgen/S = locate(/obj/machinery/power/shieldwallgen) in T
-		if(S && S.active)
+		if(S?.active)
 			return FALSE
 	return TRUE
 
@@ -394,11 +467,7 @@
 	var/dist = max((current_size - 2),1)
 	explosion(src.loc,(dist),(dist*2),(dist*4))
 	qdel(src)
-	return(gain)
-
-/obj/singularity/proc/bluespace_reaction()
-	investigate_log("has been shot by bluespace artillery and destroyed.", INVESTIGATE_SINGULO)
-	qdel(src)
+	return gain
 
 /obj/singularity/deadchat_controlled
 	move_self = FALSE
@@ -406,7 +475,7 @@
 /obj/singularity/deadchat_controlled/Initialize(mapload, starting_energy)
 	. = ..()
 	AddComponent(/datum/component/deadchat_control, DEMOCRACY_MODE, list(
-	 "up" = CALLBACK(GLOBAL_PROC, .proc/_step, src, NORTH),
-	 "down" = CALLBACK(GLOBAL_PROC, .proc/_step, src, SOUTH),
-	 "left" = CALLBACK(GLOBAL_PROC, .proc/_step, src, WEST),
-	 "right" = CALLBACK(GLOBAL_PROC, .proc/_step, src, EAST)))
+		"up" = CALLBACK(GLOBAL_PROC, .proc/_step, src, NORTH),
+		"down" = CALLBACK(GLOBAL_PROC, .proc/_step, src, SOUTH),
+		"left" = CALLBACK(GLOBAL_PROC, .proc/_step, src, WEST),
+		"right" = CALLBACK(GLOBAL_PROC, .proc/_step, src, EAST)))

@@ -28,7 +28,7 @@
 	RegisterSignal(parent, COMSIG_COMPONENT_CLEAN_ACT, .proc/clean_act)
 
 /datum/component/forensics/UnregisterFromParent()
-    UnregisterSignal(parent, list(COMSIG_COMPONENT_CLEAN_ACT))
+	UnregisterSignal(parent, list(COMSIG_COMPONENT_CLEAN_ACT))
 
 /datum/component/forensics/PostTransfer()
 	if(!isatom(parent))
@@ -43,7 +43,6 @@
 
 /datum/component/forensics/proc/wipe_blood_DNA()
 	blood_DNA = null
-	SEND_SIGNAL(src, COMSIG_WIPE_BLOOD_DNA)
 	return TRUE
 
 /datum/component/forensics/proc/wipe_fibers()

@@ -15,13 +15,9 @@
 	speed = 1
 	ranged = 1
 	pixel_x = -16
-	move_to_delay = 0.5
-	aggro_vision_range = 288
-	speak_emote = list("chitters")
 	attack_sound = 'sound/weapons/bladeslice.ogg'
 	ranged_cooldown_time = 60
 	projectiletype = /obj/projectile/mega_arachnid
-	projectilesound = 'sound/weapons/pierce.ogg'
 	alpha = 50
 
 	footstep_type = FOOTSTEP_MOB_CLAW
