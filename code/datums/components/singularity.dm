@@ -153,31 +153,15 @@
 /datum/component/singularity/proc/eat()
 	var/atom/atom_parent = parent
 
-	for (var/_tile in spiral_range_turfs(grav_pull, parent))
-		var/turf/tile = _tile
-		if (!tile || !isturf(atom_parent.loc))
+	if(!isturf(parent.loc))
+		return
+		
+	for (var/i in obounds(parent, grav_pull * 16))
+		CHECK_TICK
+		var/atom/sucker = i
+		if(QDELETED(sucker))
 			continue
-		if (get_dist(tile, parent) > consume_range)
-			tile.singularity_pull(src, singularity_size)
-		else
-			consume(src, tile)
-
-		for (var/_thing in tile)
-			var/atom/thing = _thing
-
-			// Because we can possibly yield in the middle of iteration, let's make sure what were looking at is still there
-			// Without this, you get "Qdeleted thing being thrown around"
-			if (QDELETED(thing))
-				continue
-
-			if (isturf(atom_parent.loc) && thing != parent)
-				var/atom/movable/movable_thing = thing
-				if (get_dist(movable_thing, parent) > consume_range)
-					movable_thing.singularity_pull(parent, singularity_size)
-				else
-					consume(src, movable_thing)
-
-			CHECK_TICK
+		sucker.singularity_pull(src, current_size)
 
 /datum/component/singularity/proc/move()
 	var/drifting_dir = pick(GLOB.alldirs - last_failed_movement)
@@ -185,7 +169,7 @@
 	if (!QDELETED(target) && prob(CHANCE_TO_MOVE_TO_TARGET))
 		drifting_dir = get_dir(parent, target)
 
-	step(parent, drifting_dir)
+	walk(parent, drifting_dir)
 
 /datum/component/singularity/proc/moved(datum/source, atom/new_location)
 	SIGNAL_HANDLER
