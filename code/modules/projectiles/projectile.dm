@@ -817,7 +817,8 @@
 			forcemoved = TRUE
 			hitscan_last = loc
 		else if(T != loc)
-			degstepprojectile(src, T, 16)
+			var/angle = GET_DEG(src, T)
+			degstepprojectile(src, angle, 16)
 			hitscan_last = loc
 	if(!hitscanning && !forcemoved)
 		pixel_x = trajectory.return_px() - trajectory.mpx * trajectory_multiplier * SSprojectiles.global_iterations_per_move
