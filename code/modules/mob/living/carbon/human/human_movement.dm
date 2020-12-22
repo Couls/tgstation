@@ -45,7 +45,7 @@
 
 /mob/living/carbon/human/Moved(atom/OldLoc, direct)
 	. = ..()
-	if(shoes && body_position == STANDING_UP && loc == NewLoc && has_gravity(loc))
+	if(shoes && body_position == STANDING_UP && loc == OldLoc && has_gravity(loc))
 		var/obj/item/clothing/shoes/S = shoes
 		S.step_action()
 

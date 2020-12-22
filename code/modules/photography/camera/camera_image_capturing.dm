@@ -7,9 +7,6 @@
 		if(loc && ismovable(A))
 			var/atom/movable/AM = A
 			forceStep(null, AM.step_x, AM.step_y)
-			if(iscarbon(A))
-				var/mob/living/carbon/C = A
-				UNLINT(turn_angle = C.lying_angle) // this is the only place its okay to read lying directly
 	. = ..()
 
 /obj/item/camera/proc/camera_get_icon(list/turfs, turf/center, psize_x = 96, psize_y = 96, datum/turf_reservation/clone_area, size_x, size_y, total_x, total_y)

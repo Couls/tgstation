@@ -1,4 +1,3 @@
-
 #define MOVES_HITSCAN -1		//Not actually hitscan but close as we get without actual hitscan.
 #define MUZZLE_EFFECT_PIXEL_INCREMENT 17	//How many pixels to move the muzzle flash up so your character doesn't look like they're shitting out lasers.
 
@@ -361,6 +360,7 @@
 	if(impacted[A])		// NEVER doublehit
 		return FALSE
 	var/datum/point/pcache = trajectory.copy_to()
+	var/turf/T = get_turf(A)
 	if(ricochets < ricochets_max && check_ricochet_flag(A) && check_ricochet(A))
 		ricochets++
 		if(A.handle_ricochet(src))
@@ -375,7 +375,7 @@
 				store_hitscan_collision(pcache)
 			return TRUE
 
-	var/distance = bounds_dist(A, starting) / 32 // Get the distance between the turf shot from and the mob we hit and use that for the calculations.
+	var/distance = bounds_dist(A, starting) / PIXEL_TILE_SIZE // Get the distance between the turf shot from and the mob we hit and use that for the calculations.
 	def_zone = ran_zone(def_zone, max(100-(7*distance), 5)) //Lower accurancy/longer range tradeoff. 7 is a balanced number to use.
 
 	return process_hit(T, select_target(T, A, A), A)		// SELECT TARGET FIRST!
@@ -658,7 +658,7 @@
 			time_offset += overrun * speed
 		time_offset += MODULUS(elapsed_time_deciseconds, speed)
 
-	for(var/i in 1 to required_moves) // required moves is in turfs
+	for(var/i in 1 to required_moves)
 		pixel_move(1, FALSE)
 
 /obj/projectile/proc/fire(angle, atom/direct_target)
@@ -678,8 +678,6 @@
 	if(spread)
 		setAngle(Angle + ((rand() - 0.5) * spread))
 	var/turf/starting = get_turf(src)
-	if(iswallturf(starting))
-		return process_hit(select_target(starting))
 	if(isnull(Angle))	//Try to resolve through offsets if there's no angle set.
 		if(isnull(xo) || isnull(yo))
 			stack_trace("WARNING: Projectile [type] deleted due to being unable to resolve a target after angle was null!")
@@ -781,7 +779,7 @@
 			continue
 		if(safety-- <= 0)
 			if(loc)
-				process_hit(loc)
+				Bump(loc)
 			if(!QDELETED(src))
 				qdel(src)
 			return	//Kill!
@@ -797,12 +795,34 @@
 		transform = M
 	if(homing)
 		process_homing()
+	var/forcemoved = FALSE
 	for(var/i in 1 to SSprojectiles.global_iterations_per_move)
 		if(QDELETED(src))
 			return
 		trajectory.increment(trajectory_multiplier)
-		degstepprojectile(src, round(Angle), 16)
-		hitscan_last = loc
+		var/turf/T = trajectory.return_turf()
+		if(!istype(T))
+			qdel(src)
+			return
+		if(T.z != loc.z)
+			var/old = loc
+			before_z_change(loc, T)
+			trajectory_ignore_forcemove = TRUE
+			forceMove(T)
+			trajectory_ignore_forcemove = FALSE
+			after_z_change(old, loc)
+			if(!hitscanning)
+				pixel_x = trajectory.return_px()
+				pixel_y = trajectory.return_py()
+			forcemoved = TRUE
+			hitscan_last = loc
+		else if(T != loc)
+			degstepprojectile(src, T, 16)
+			hitscan_last = loc
+	if(!hitscanning && !forcemoved)
+		pixel_x = trajectory.return_px() - trajectory.mpx * trajectory_multiplier * SSprojectiles.global_iterations_per_move
+		pixel_y = trajectory.return_py() - trajectory.mpy * trajectory_multiplier * SSprojectiles.global_iterations_per_move
+		animate(src, pixel_x = trajectory.return_px(), pixel_y = trajectory.return_py(), time = 1, flags = ANIMATION_END_NOW)
 	Range()
 
 /obj/projectile/proc/process_homing()			//may need speeding up in the future performance wise.

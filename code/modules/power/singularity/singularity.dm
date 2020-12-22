@@ -65,25 +65,6 @@
 	GLOB.singularities.Remove(src)
 	return ..()
 
-/obj/singularity/Move(atom/newloc, direct, _step_x, _step_y)
-	. = ..()
-	if(!.)
-		last_failed_movement = direct
-	else
-		last_failed_movement = NONE
-
-/obj/singularity/attack_hand(mob/user)
-	consume(user)
-	return TRUE
-
-/obj/singularity/attack_paw(mob/user)
-	consume(user)
-
-/obj/singularity/attack_alien(mob/user)
-	consume(user)
-
-/obj/singularity/attack_animal(mob/user)
-	consume(user)
 /obj/singularity/attack_tk(mob/user)
 	if(!iscarbon(user))
 		return
@@ -108,10 +89,6 @@
 	addtimer(CALLBACK(GLOBAL_PROC, .proc/carbon_tk_part_two, jedi), 0.1 SECONDS)
 
 
-// We don't drift around space, they drift around us
-/obj/singularity/Process_Spacemove()
-	return TRUE
-	
 /obj/singularity/proc/carbon_tk_part_two(mob/living/carbon/jedi)
 	if(QDELETED(jedi))
 		return
@@ -129,54 +106,6 @@
 	addtimer(CALLBACK(GLOBAL_PROC, .proc/carbon_tk_part_three, jedi), 0.1 SECONDS)
 
 
-/obj/singularity/ex_act(severity, target)
-	if(!severity)
-		return
-	if(severity == 1 && current_size <= STAGE_TWO)
-		investigate_log("has been destroyed by a heavy explosion.", INVESTIGATE_SINGULO)
-		qdel(src)
-		return
-	energy -= round( (energy+1) / (severity+1), 1)
-
-/obj/singularity/bullet_act(obj/projectile/P)
-	qdel(P)
-	return BULLET_ACT_HIT //Will there be an impact? Who knows.  Will we see it? No.
-
-/obj/singularity/Bump(atom/A)
-	. = ..()
-	consume(A)
-	if(QDELETED(A)) // don't keep moving into objects that weren't destroyed infinitely
-		step(src, drifting_dir)
-
-/obj/singularity/Crossed(atom/A)
-	..()
-	consume(A)
-
-/obj/singularity/Bumped(atom/movable/AM)
-	. = ..()
-	consume(AM)
-
-/obj/singularity/Crossed(atom/movable/AM, oldloc)
-	. = ..()
-	consume(AM)
-
-/obj/singularity/Moved(atom/OldLoc, Dir)
-	. = ..()
-	for(var/i in bounds())
-		if(i == src)
-			continue
-		consume(i)
-
-/obj/singularity/process()
-	automatic_movement()
-
-	if(current_size >= STAGE_TWO)
-		step_size = 6
-		if(prob(event_chance)) //Chance for it to run a special event TODO:Come up with one or two more that fit
-			event()
-	dissipate(delta_time)
-	check_energy()
-	
 /obj/singularity/proc/carbon_tk_part_three(mob/living/carbon/jedi)
 	if(QDELETED(jedi))
 		return
@@ -207,21 +136,20 @@
 /obj/singularity/process(delta_time)
 	if(current_size >= STAGE_TWO)
 		if(prob(event_chance))//Chance for it to run a special event TODO:Come up with one or two more that fit
+			event()
+	dissipate(delta_time)
+	check_energy()
 
-/obj/singularity/attack_ai() //to prevent ais from gibbing themselves when they click on one.
-	return
-
-/obj/singularity/proc/admin_investigate_setup()
-	var/turf/T = get_turf(src)
-	last_warning = world.time
-	var/count = locate(/obj/machinery/field/containment) in urange(30, src, 1)
-	if(!count)
-		message_admins("A singulo has been created without containment fields active at [ADMIN_VERBOSEJMP(T)].")
-	investigate_log("was created at [AREACOORD(T)]. [count?"":"<font color='red'>No containment fields were active</font>"]", INVESTIGATE_SINGULO)
-
-/obj/singularity/proc/dissipate()
-	if(!dissipate)
+/obj/singularity/proc/dissipate(delta_time)
+	if (!dissipate)
 		return
+
+	time_since_last_dissipiation += delta_time
+
+	// Uses a while in case of especially long delta times
+	while (time_since_last_dissipiation >= dissipate_delay)
+		energy -= dissipate_strength
+		time_since_last_dissipiation -= dissipate_delay
 
 /obj/singularity/proc/expand(force_size = 0)
 	var/temp_allowed_size = src.allowed_size
@@ -365,38 +293,17 @@
 		expand()
 	return TRUE
 
-/obj/singularity/proc/eat()
-	if(!isturf(loc))
-		return
-	for(var/i in obounds(src, grav_pull*16))
-		CHECK_TICK
-		var/atom/sucker = i
-		if(QDELETED(sucker))
-			continue
-		sucker.singularity_pull(src, current_size)
-
 /obj/singularity/proc/consume(atom/A)
 	set waitfor = FALSE
 	if(CHECK_TICK && QDELETED(A))
 		return
 	var/gain = A.singularity_act(current_size, src)
 	energy += gain
-	if(istype(A, /obj/machinery/power/supermatter_crystal) && !consumedSupermatter)
+	if(istype(A, /obj/machinery/power/supermatter_crystal) && !consumed_supermatter)
 		desc = "[initial(desc)] It glows fiercely with inner fire."
 		name = "supermatter-charged [initial(name)]"
-		consumedSupermatter = TRUE
+		consumed_supermatter = TRUE
 		set_light(10)
-
-/obj/singularity/proc/automatic_movement(force_move = NONE)
-	if(!move_self)
-		return FALSE
-
-	var/drifting_dir = force_move || pick(GLOB.alldirs - last_failed_movement)
-
-	if(target && prob(60))
-		drifting_dir = get_dir(src,target) //moves to a singulo beacon, if there is one
-
-	walk(src, drifting_dir)
 
 /obj/singularity/proc/check_cardinals_range(range)
 	for(var/turf/place in bounds(src, (range*32) - bound_width + 32))

@@ -1,7 +1,7 @@
 /mob/living/Moved(atom/OldLoc, Dir)
 	. = ..()
 	update_turf_movespeed(loc)
-	if(!(mobility_flags & MOBILITY_STAND) && !buckled && prob(getBruteLoss()*200/maxHealth) && OldLoc != loc)
+	if(body_position == LYING_DOWN && !buckled && prob(getBruteLoss()*200/maxHealth))
 		makeTrail(loc, OldLoc, Dir)
 
 

@@ -277,8 +277,6 @@ GLOBAL_LIST_EMPTY(species_list)
 		LAZYSET(user.do_afters, interaction_key, current_interaction_count + 1)
 
 	var/atom/user_loc = user.loc
-	var/Ustep_x = user.step_x
-	var/Ustep_y = user.step_y
 
 	var/drifting = FALSE
 	if(!user.Process_Spacemove(0) && user.inertia_dir)
@@ -304,8 +302,6 @@ GLOBAL_LIST_EMPTY(species_list)
 		if(drifting && !user.inertia_dir)
 			drifting = FALSE
 			user_loc = user.loc
-			Ustep_x = user.step_x
-			Ustep_y = user.step_y
 		if(
 			QDELETED(user) \
 			|| (!(timed_action_flags & IGNORE_USER_LOC_CHANGE) && !drifting && user.loc != user_loc) \
@@ -342,8 +338,6 @@ GLOBAL_LIST_EMPTY(species_list)
 	if(!length(targets))
 		return FALSE
 	var/user_loc = user.loc
-	var/user_step_x = user.step_x
-	var/user_step_y = user.step_y
 
 	time *= user.cached_multiplicative_actions_slowdown
 
@@ -384,8 +378,6 @@ GLOBAL_LIST_EMPTY(species_list)
 		if(drifting && !user.inertia_dir)
 			drifting = FALSE
 			user_loc = user.loc
-			user_step_x = user.step_x
-			user_step_y = user.step_y
 
 		if(
 			(!(timed_action_flags & IGNORE_USER_LOC_CHANGE) && !drifting && user_loc != user.loc) \

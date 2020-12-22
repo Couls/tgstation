@@ -251,7 +251,6 @@
 
 	return ..()
 
-
 /atom/movable/proc/start_pulling(atom/movable/AM, state, force = move_force, supress_message = FALSE)
 	if(QDELETED(AM))
 		return FALSE
@@ -347,6 +346,14 @@
 			return
 	return TRUE
 
+/atom/movable/proc/set_glide_size(target = 8)
+	SEND_SIGNAL(src, COMSIG_MOVABLE_UPDATE_GLIDE_SIZE, target)
+	glide_size = target
+
+	for(var/m in buckled_mobs)
+		var/mob/buckled_mob = m
+		buckled_mob.set_glide_size(target)
+		
 #define ANGLE_ADJUST 10
 /**
   * Handles the movement of the object src is pulling

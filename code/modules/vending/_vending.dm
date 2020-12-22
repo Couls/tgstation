@@ -1159,6 +1159,10 @@ GLOBAL_LIST_EMPTY(vending_products)
 	return FALSE
 
 /obj/machinery/vending/custom/Destroy()
+	unbuckle_all_mobs(TRUE)
+	var/turf/T = get_turf(src)
+	if(T)
+		for(var/obj/item/I in contents)
 			I.forceMove(T)
 		explosion(T, -1, 0, 3)
 	return ..()

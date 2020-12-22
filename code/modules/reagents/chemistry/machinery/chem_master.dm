@@ -447,6 +447,131 @@
 		. = . % 9
 		AM.forceMove(AM.loc, ((.%3)*6), -8 + (round( . / 3)*8))
 
+/**
+ * Translates styles data into UI compatible format
+ *
+ * Expects to receive list of availables condiment styles in its complete format, and transforms them in simplified form with enough data to get UI going.
+ * Returns list(list("id" = <key>, "className" = <icon class>, "title" = <name and desc>),..).
+ *
+ * Arguments:
+ * * styles - List of styles for condiment bottles in internal format: [/obj/machinery/chem_master/proc/get_condi_styles]
+ */
+/obj/machinery/chem_master/proc/strip_condi_styles_to_icons(list/styles)
+	var/list/icons = list()
+	for (var/s in styles)
+		if (styles[s] && styles[s]["class_name"])
+			var/list/icon = list()
+			var/list/style = styles[s]
+			icon["id"] = s
+			icon["className"] = style["class_name"]
+			icon["title"] = "[style["name"]]\n[style["desc"]]"
+			icons += list(icon)
+
+	return icons
+
+/**
+ * Defines and provides list of available condiment bottle styles
+ *
+ * Uses typelist() for styles storage after initialization.
+ * For fallback style must provide style with key (const) CONDIMASTER_STYLE_FALLBACK
+ * Returns list(
+ * 	<key> = list(
+ * 		"icon_state" = <bottle icon_state>,
+ * 		"name" = <bottle name>,
+ * 		"desc" = <bottle desc>,
+ * 		?"generate_name" = <if truthy, autogenerates default name from reagents instead of using "name">,
+ * 		?"icon_empty" = <icon_state when empty>,
+ * 		?"fill_icon_thresholds" = <list of thresholds for reagentfillings, no tresholds if not provided or falsy>,
+ * 		?"inhand_icon_state" = <inhand icon_state, falsy - no icon, not provided - whatever is initial (currently "beer")>,
+ * 		?"lefthand_file" = <file for inhand icon for left hand, ignored if "inhand_icon_state" not provided>,
+ * 		?"righthand_file" = <same as "lefthand_file" but for right hand>,
+ * 	),
+ * 	..
+ * )
+ *
+ */
+/obj/machinery/chem_master/proc/get_condi_styles()
+	var/list/styles = typelist("condi_styles")
+	if (!styles.len)
+		//Possible_states has the reagent type as key and a list of, in order, the icon_state, the name and the desc as values. Was used in the condiment/on_reagent_change(changetype) to change names, descs and sprites.
+		styles += list(
+			CONDIMASTER_STYLE_FALLBACK = list("icon_state" = "emptycondiment", "icon_empty" = "", "name" = "condiment bottle", "desc" = "Just your average condiment bottle.", "fill_icon_thresholds" = list(0, 10, 25, 50, 75, 100), "generate_name" = TRUE),
+			"enzyme" = list("icon_state" = "enzyme", "icon_empty" = "", "name" = "universal enzyme bottle", "desc" = "Used in cooking various dishes."),
+			"flour" = list("icon_state" = "flour", "icon_empty" = "", "name" = "flour sack", "desc" = "A big bag of flour. Good for baking!"),
+			"mayonnaise" = list("icon_state" = "mayonnaise", "icon_empty" = "", "name" = "mayonnaise jar", "desc" = "An oily condiment made from egg yolks."),
+			"milk" = list("icon_state" = "milk", "icon_empty" = "", "name" = "space milk", "desc" = "It's milk. White and nutritious goodness!"),
+			"blackpepper" = list("icon_state" = "peppermillsmall", "inhand_icon_state" = "", "icon_empty" = "emptyshaker", "name" = "pepper mill", "desc" = "Often used to flavor food or make people sneeze."),
+			"rice" = list("icon_state" = "rice", "icon_empty" = "", "name" = "rice sack", "desc" = "A big bag of rice. Good for cooking!"),
+			"sodiumchloride" = list("icon_state" = "saltshakersmall", "inhand_icon_state" = "", "icon_empty" = "emptyshaker", "name" = "salt shaker", "desc" = "Salt. From dead crew, presumably."),
+			"soymilk" = list("icon_state" = "soymilk", "icon_empty" = "", "name" = "soy milk", "desc" = "It's soy milk. White and nutritious goodness!"),
+			"soysauce" = list("icon_state" = "soysauce", "inhand_icon_state" = "", "icon_empty" = "", "name" = "soy sauce bottle", "desc" = "A salty soy-based flavoring."),
+			"sugar" = list("icon_state" = "sugar", "icon_empty" = "", "name" = "sugar sack", "desc" = "Tasty spacey sugar!"),
+			"ketchup" = list("icon_state" = "ketchup", "icon_empty" = "", "name" = "ketchup bottle", "desc" = "You feel more American already."),
+			"capsaicin" = list("icon_state" = "hotsauce", "icon_empty" = "", "name" = "hotsauce bottle", "desc" = "You can almost TASTE the stomach ulcers!"),
+			"frostoil" = list("icon_state" = "coldsauce", "icon_empty" = "", "name" = "coldsauce bottle", "desc" = "Leaves the tongue numb from its passage."),
+			"cornoil" = list("icon_state" = "oliveoil", "icon_empty" = "", "name" = "corn oil bottle", "desc" = "A delicious oil used in cooking. Made from corn."),
+			"bbqsauce" = list("icon_state" = "bbqsauce", "icon_empty" = "", "name" = "bbq sauce bottle", "desc" = "Hand wipes not included.")
+		)
+		var/list/carton_in_hand = list(
+			"inhand_icon_state" = "carton",
+			"lefthand_file" = 'icons/mob/inhands/equipment/kitchen_lefthand.dmi',
+			"righthand_file" = 'icons/mob/inhands/equipment/kitchen_righthand.dmi'
+		)
+		for (var/style_reagent in list("flour", "milk", "rice", "soymilk", "sugar"))
+			if (style_reagent in styles)
+				styles[style_reagent] += carton_in_hand
+		var/datum/asset/spritesheet/simple/assets = get_asset_datum(/datum/asset/spritesheet/simple/condiments)
+		for (var/reagent in styles)
+			styles[reagent]["class_name"] = assets.icon_class_name(reagent)
+	return styles
+
+/**
+ * Provides condiment bottle style based on reagents.
+ *
+ * Gets style from available by key, using last part of main reagent type (eg. "rice" for /datum/reagent/consumable/rice) as key.
+ * If not available returns fallback style, or null if no such thing.
+ * Returns list that is one of condibottle styles from [/obj/machinery/chem_master/proc/get_condi_styles]
+ */
+/obj/machinery/chem_master/proc/guess_condi_style(datum/reagents/reagents)
+	var/list/styles = get_condi_styles()
+	if (reagents.reagent_list.len > 0)
+		var/main_reagent = reagents.get_master_reagent_id()
+		if (main_reagent)
+			var/list/path = splittext("[main_reagent]", "/")
+			main_reagent = path[path.len]
+		if(main_reagent in styles)
+			return styles[main_reagent]
+	return styles[CONDIMASTER_STYLE_FALLBACK]
+
+/**
+ * Applies style to condiment bottle.
+ *
+ * Applies props provided in "style" assuming that "container" is freshly created with no styles applied before.
+ * User specified name for bottle applied after this method during bottle creation,
+ * so container.name overwritten here for consistency rather than with some purpose in mind.
+ *
+ * Arguments:
+ * * container - condiment bottle that gets style applied to it
+ * * style - assoc list, must probably one from [/obj/machinery/chem_master/proc/get_condi_styles]
+ */
+/obj/machinery/chem_master/proc/apply_condi_style(obj/item/reagent_containers/food/condiment/container, list/style)
+	container.name = style["name"]
+	container.desc = style["desc"]
+	container.icon_state = style["icon_state"]
+	container.icon_empty = style["icon_empty"]
+	container.fill_icon_thresholds = style["fill_icon_thresholds"]
+	if ("inhand_icon_state" in style)
+		container.inhand_icon_state = style["inhand_icon_state"]
+		if (style["lefthand_file"] || style["righthand_file"])
+			container.lefthand_file = style["lefthand_file"]
+			container.righthand_file = style["righthand_file"]
+
+/**
+ * Machine that allows to identify and separate reagents in fitting container
+ * as well as to create new containers with separated reagents in it.
+ *
+ * All logic related to this is in [/obj/machinery/chem_master] and condimaster specific UI enabled by "condi = TRUE"
+ */
 /obj/machinery/chem_master/condimaster
 	name = "CondiMaster 3000"
 	desc = "Used to create condiments and other cooking supplies."

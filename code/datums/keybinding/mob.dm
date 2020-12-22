@@ -119,7 +119,7 @@
 	last_intent = M.m_intent
 	M.m_intent = MOVE_INTENT_CRAWL
 	if(M.hud_used && M.hud_used.static_inventory)
-		for(var/obj/screen/mov_intent/selector in M.hud_used.static_inventory)
+		for(var/atom/movable/screen/mov_intent/selector in M.hud_used.static_inventory)
 			selector.update_icon()
 	return TRUE
 
@@ -128,7 +128,7 @@
 	M.remove_movespeed_modifier(/datum/movespeed_modifier/move_carefully, TRUE)
 	M.m_intent = last_intent
 	if(M.hud_used && M.hud_used.static_inventory)
-		for(var/obj/screen/mov_intent/selector in M.hud_used.static_inventory)
+		for(var/atom/movable/screen/mov_intent/selector in M.hud_used.static_inventory)
 			selector.update_icon()
 	return TRUE
 

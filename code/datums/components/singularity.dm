@@ -153,15 +153,15 @@
 /datum/component/singularity/proc/eat()
 	var/atom/atom_parent = parent
 
-	if(!isturf(parent.loc))
+	if(!isturf(atom_parent.loc))
 		return
-		
+
 	for (var/i in obounds(parent, grav_pull * 16))
 		CHECK_TICK
 		var/atom/sucker = i
 		if(QDELETED(sucker))
 			continue
-		sucker.singularity_pull(src, current_size)
+		sucker.singularity_pull(src, singularity_size)
 
 /datum/component/singularity/proc/move()
 	var/drifting_dir = pick(GLOB.alldirs - last_failed_movement)

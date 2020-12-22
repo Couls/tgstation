@@ -153,7 +153,7 @@
 	for(var/atom/movable/thing in bounds())
 		if(insert(thing) == -1) // limit reached
 			break
-	for(var/i in reverseRange(L.GetAllContents()))
+	for(var/i in reverseRange(GetAllContents()))
 		var/atom/movable/thing = i
 		SEND_SIGNAL(thing, COMSIG_TRY_STORAGE_HIDE_ALL)
 
