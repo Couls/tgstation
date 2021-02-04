@@ -1113,3 +1113,32 @@
 */
 /atom/movable/proc/keybind_face_direction(direction)
 	setDir(direction)
+
+particles/snow
+	width = 500     // 500 x 500 image to cover a moderately sized map
+	height = 500
+	count = 2500    // 2500 particles
+	spawning = 10    // 3 new particles per client tick
+	bound1 = list(-1000, -300, -1000)   // end particles at Y=-300
+	lifespan = 600  // last 600 client ticks max
+	fade = 50       // fade out over the last 50 ticks if still on screen
+	// spawn within a certain x,y,z space
+	// control how the snow falls
+	gravity = list(0, -3.2)
+	friction = 0.2  // shed 20% of velocity and drift every client tick
+obj/snow
+	screen_loc = "CENTER"
+	New()
+		..()
+		particles = new/particles/snow
+		particles.position = generator("box", list(-300,250,0), list(300,300,100))
+		particles.drift = generator("sphere", 0, 2)
+
+/mob/proc/CreateSnow()
+	set name = "Create Snow"
+	set category = "IC"
+	client?.screen += new/obj/snow
+
+/mob/New()
+	..()
+	add_verb(src, /mob/proc/CreateSnow)
