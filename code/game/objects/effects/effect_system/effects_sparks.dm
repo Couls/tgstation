@@ -50,7 +50,7 @@
 		T.hotspot_expose(1000,100)
 
 /datum/effect_system/spark_spread
-	effect_type = /obj/effect/particle_effect/sparks
+	particle_type = /obj/particle_holder/sparks
 
 /datum/effect_system/spark_spread/quantum
 	effect_type = /obj/effect/particle_effect/sparks/quantum

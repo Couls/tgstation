@@ -152,6 +152,23 @@
 	if(rotcomp)
 		rotcomp.HandRot(null,usr,ROTATION_CLOCKWISE)
 
+/particles/burning
+	icon = 'icons/effects/fire.dmi'
+	icon_state = "fire"
+	lifespan = 600
+	count = 100
+	width = 32
+	height = 32
+	position = generator("square", list(-32, -32), list(32, 32))
+	spawning = 1
+	fade = 50
+
+/atom/movable/verb/set_on_fire()
+	set name = "Burn baby Burn!"
+	set category = "Object"
+	set src in oview(1)
+	src.particles = new/particles/burning
+
 /atom/movable/proc/simple_rotate_counterclockwise()
 	set name = "Rotate Counter-Clockwise"
 	set category = "Object"
